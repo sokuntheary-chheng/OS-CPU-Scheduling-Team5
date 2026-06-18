@@ -53,60 +53,53 @@ def get_sample_processes():
     ]
 
 
-def _read_int(prompt, min_value=None):
-    """
-    Reads an integer from the console with validation.
-    Re-prompts on blank input, non-numeric input, or values below min_value,
-    instead of letting ValueError crash the whole program.
-    """
+def _read_int(prompt, min_val=0, allow_zero=True):
+    """Read and validate an integer from stdin. Keeps asking until valid."""
     while True:
         raw = input(prompt).strip()
-        if raw == "":
-            print("    -> This field is required. Please enter a number.")
+        if not raw:
+            print(f"    [!] Input cannot be empty. Please enter a number.")
             continue
         try:
-            value = int(raw)
+            val = int(raw)
         except ValueError:
-            print(f"    -> '{raw}' is not a valid integer. Try again.")
+            print(f"    [!] '{raw}' is not a valid integer. Try again.")
             continue
-        if min_value is not None and value < min_value:
-            print(f"    -> Value must be >= {min_value}. Try again.")
+        if val < min_val:
+            print(f"    [!] Value must be >= {min_val}. Try again.")
             continue
-        return value
+        if not allow_zero and val == 0:
+            print(f"    [!] Value must be > 0. Try again.")
+            continue
+        return val
 
 
 def input_processes():
     """
     Prompts the user to enter processes manually via the terminal.
-    Returns a list of Process objects.
-
-    Validation added:
-      - number of processes must be a positive integer (>= 1)
-      - arrival time must be an integer >= 0
-      - burst time must be an integer >= 1 (a process with 0 burst time
-        is meaningless for scheduling and breaks several algorithms)
-      - process IDs default to P<i> if left blank, and duplicate IDs are
-        rejected so PID-based sorting/metrics stay unambiguous
+    Validates all input before returning a list of Process objects.
     """
     processes = []
     print("\n--- Process Input ---")
 
-    n = _read_int("Enter number of processes: ", min_value=1)
+    n = _read_int("Enter number of processes (must be >= 1): ", min_val=1)
 
     used_pids = set()
     for i in range(n):
-        default_pid = f"P{i + 1}"
-        pid = input(f"  Process {i + 1} ID (e.g. {default_pid}) "
-                     f"[default {default_pid}]: ").strip()
-        if pid == "":
-            pid = default_pid
-        while pid in used_pids:
-            print(f"    -> PID '{pid}' is already used. Please choose another.")
-            pid = input(f"  Process {i + 1} ID: ").strip() or default_pid
-        used_pids.add(pid)
+        # PID validation
+        while True:
+            pid = input(f"  Process {i+1} ID (e.g. P{i+1}): ").strip()
+            if not pid:
+                print("    [!] PID cannot be empty.")
+            elif pid in used_pids:
+                print(f"    [!] PID '{pid}' already used. Choose a unique ID.")
+            else:
+                used_pids.add(pid)
+                break
 
-        arrival = _read_int(f"  Arrival Time for {pid}: ", min_value=0)
-        burst = _read_int(f"  Burst Time for {pid}: ", min_value=1)
+        arrival = _read_int(f"  Arrival Time for {pid} (>= 0): ", min_val=0)
+        burst   = _read_int(f"  Burst Time   for {pid} (>= 1): ", min_val=1)
         processes.append(Process(pid, arrival, burst))
 
+    print(f"\n  [✓] {n} process(es) loaded successfully.")
     return processes

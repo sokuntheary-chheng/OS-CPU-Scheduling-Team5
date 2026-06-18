@@ -65,6 +65,18 @@ def read_positive_quantum(prompt, default):
         return int(raw)
 
 
+def pause():
+    """
+    Waits for the user to press Enter before returning to the menu.
+    This is a safety net: even on a short terminal window, results can't
+    scroll out of view before being read, since nothing else prints until
+    the user presses Enter. The menu itself is reprinted right after this
+    returns (see the main loop), so the user always sees it again without
+    having to type anything.
+    """
+    input("\n  Press Enter to continue...")
+
+
 def main():
     # Default: use sample scenario from project brief
     processes = get_sample_processes()
@@ -75,29 +87,42 @@ def main():
     print(f"  [Default Input] P1(0,5), P2(1,3), P3(2,8), P4(3,6) | RR Quantum={rr_quantum}")
 
     while True:
-        print(MENU)
+        # The menu reprints automatically every loop, same as before -- but
+        # now every algorithm call is followed by pause(), which blocks on
+        # input() until the user presses Enter. That's what actually fixes
+        # the "output disappears" issue: the Gantt chart / metrics table
+        # stays on screen, fully read, BEFORE the menu reprints underneath
+        # it and scrolls it up. Without that pause, the menu could reprint
+        # immediately after a fast algorithm run and push results out of
+        # view before the user had a chance to read them.
         choice = input("  Select option: ").strip()
 
         if not processes and choice in ("1", "2", "3", "4", "5", "6"):
             print("  No processes loaded. Use option 7 to enter processes first.")
+            print(MENU)
             continue
 
         if choice == "1":
             run_fcfs(processes)
+            pause()
 
         elif choice == "2":
             run_sjf(processes)
+            pause()
 
         elif choice == "3":
             run_srt(processes)
+            pause()
 
         elif choice == "4":
             rr_quantum = read_positive_quantum(
                 f"  Enter time quantum [default {rr_quantum}]: ", rr_quantum)
             run_rr(processes, rr_quantum)
+            pause()
 
         elif choice == "5":
             run_mlfq(processes, mlfq_q0, mlfq_q1)
+            pause()
 
         elif choice == "6":
             print("\n  Running all algorithms on current process set...\n")
@@ -114,6 +139,7 @@ def main():
                 f"Round Robin (q={rr_quantum})"     : rr_procs,
                 f"MLFQ (q0={mlfq_q0},q1={mlfq_q1})": mlfq_procs,
             })
+            pause()
 
         elif choice == "7":
             processes = input_processes()
@@ -125,6 +151,8 @@ def main():
 
         else:
             print("  Invalid option. Please try again.")
+
+        print(MENU)
 
 
 if __name__ == "__main__":
