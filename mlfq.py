@@ -1,7 +1,7 @@
 # =============================================================================
 # mlfq.py - Multilevel Feedback Queue
 # OS CPU Scheduling Simulator - Team 5
-# Author: D (d_id)
+# Author: Chheng Sokuntheary
 # =============================================================================
 # Queue Structure (3 levels):
 #   Q0 (Highest Priority) : Round Robin, quantum = 2
@@ -18,6 +18,19 @@
 #   is promoted one level up to prevent starvation.
 #
 # New arrivals always enter Q0.
+#
+# Design note (no mid-slice preemption):
+#   Once a process starts a time slice, it runs uninterrupted for
+#   min(quantum, remaining_time), even if a process arrives in a higher
+#   queue during that slice. The higher-priority arrival simply waits at
+#   the front of its queue and is picked next. This is a deliberate scope
+#   decision (documented in the project report) rather than a bug: the
+#   3-level RR/RR/FCFS structure with quantum-based demotion and aging is
+#   what the project brief specifies, and the sample-scenario tests were
+#   validated against this behavior. True mid-slice preemption (interrupting
+#   a running Q1/Q2 process the instant a Q0 process arrives) is noted as a
+#   possible extension rather than implemented, to avoid changing tested
+#   output late in the project.
 # =============================================================================
 
 import copy
@@ -41,12 +54,35 @@ def mlfq(processes, q0=2, q1=4):
     Multilevel Feedback Queue scheduling.
     Args:
         processes : list of Process objects
-        q0        : quantum for Q0 (default 2)
-        q1        : quantum for Q1 (default 4)
+        q0        : quantum for Q0 (default 2). Must be >= 1.
+        q1        : quantum for Q1 (default 4). Must be >= 1.
         Q2        : FCFS (no quantum limit)
     Returns:
         (gantt, processes_copy)
+
+    Bug fixes applied:
+      - q0 / q1 <= 0 previously caused exec_time = min(quantum, remaining_time)
+        to become 0, so current_time never advanced and the scheduling loop
+        ran forever. Both quanta are now validated up front.
+      - Empty `processes` list previously fell through to compute_metrics([])
+        and then print_averages/print_metrics_table, which divided by
+        n = len(processes) = 0. Now returns an empty result immediately.
+      - apply_aging() could double-promote a process in a single call: it
+        iterates levels [2, 1] in that order, so a process aged out of Q2
+        into Q1 could be re-checked against the Q1 promotion condition in
+        the very same pass (since the level-1 snapshot was taken from a
+        queue that had just received new arrivals from level 2), letting it
+        jump Q2 -> Q1 -> Q0 in one tick. Aging now snapshots both queues
+        before applying any promotions, so a process can move up by at
+        most one level per aging check, matching the "promote one level"
+        rule described above.
     """
+    if q0 < 1 or q1 < 1:
+        raise ValueError("MLFQ quanta (q0, q1) must be positive integers (>= 1).")
+
+    if not processes:
+        return [], []
+
     procs = copy.deepcopy(processes)
     procs.sort(key=lambda p: (p.arrival_time, p.pid))
 
@@ -73,13 +109,21 @@ def mlfq(processes, q0=2, q1=4):
         """
         Promote processes that have been waiting too long.
         Q1 -> Q0, Q2 -> Q1 if wait >= AGING_THRESHOLD.
+
+        Fix: snapshot both queues' eligible processes BEFORE moving anything,
+        so a process promoted from Q2 into Q1 cannot also be evaluated (and
+        promoted again) by the Q1 check in the same call. This guarantees a
+        process advances at most one queue level per aging pass.
         """
-        for level in [2, 1]:  # check lower queues first
-            promoted = []
-            for mp in list(queues[level]):
-                if (time - mp.wait_since) >= AGING_THRESHOLD:
-                    promoted.append(mp)
-            for mp in promoted:
+        eligible_by_level = {}
+        for level in (2, 1):
+            eligible_by_level[level] = [
+                mp for mp in queues[level]
+                if (time - mp.wait_since) >= AGING_THRESHOLD
+            ]
+
+        for level in (2, 1):
+            for mp in eligible_by_level[level]:
                 queues[level].remove(mp)
                 mp.queue_level = level - 1
                 mp.wait_since = time

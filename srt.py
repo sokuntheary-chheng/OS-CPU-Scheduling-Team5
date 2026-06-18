@@ -9,6 +9,10 @@
 #   If a new process arrives with shorter remaining time than the running process,
 #   a context switch occurs (preemption).
 #   Simulation runs tick-by-tick to accurately capture all preemption points.
+#
+# Note on performance: this is an O(total_time * n) simulation, which is fine
+# for coursework-sized inputs (bursts in the tens/hundreds) but would need a
+# heap-based event simulation to scale to very large burst times.
 # =============================================================================
 
 import copy
@@ -25,16 +29,10 @@ def srt(processes):
     """
     procs = copy.deepcopy(processes)
 
-    # Build event times: all unique arrival times + 0
-    event_times = sorted(set([p.arrival_time for p in procs] + [0]))
-
     gantt = []          # (pid, start, end)
     current_time = 0
     completed = []
     active = []         # processes currently in ready queue
-
-    total_burst = sum(p.burst_time for p in procs)
-    end_time = max(p.arrival_time for p in procs) + sum(p.burst_time for p in procs)
 
     last_pid = None
     segment_start = 0

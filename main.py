@@ -48,6 +48,23 @@ def print_comparison(results):
     print()
 
 
+def read_positive_quantum(prompt, default):
+    """
+    Prompts for a time quantum and validates it's a positive integer.
+    Falls back to `default` on blank input. Re-prompts on invalid/non-positive
+    input instead of silently accepting something that would make the
+    scheduler loop forever (quantum <= 0).
+    """
+    while True:
+        raw = input(prompt).strip()
+        if raw == "":
+            return default
+        if not raw.isdigit() or int(raw) < 1:
+            print("    -> Quantum must be a positive integer. Try again.")
+            continue
+        return int(raw)
+
+
 def main():
     # Default: use sample scenario from project brief
     processes = get_sample_processes()
@@ -61,6 +78,10 @@ def main():
         print(MENU)
         choice = input("  Select option: ").strip()
 
+        if not processes and choice in ("1", "2", "3", "4", "5", "6"):
+            print("  No processes loaded. Use option 7 to enter processes first.")
+            continue
+
         if choice == "1":
             run_fcfs(processes)
 
@@ -71,8 +92,8 @@ def main():
             run_srt(processes)
 
         elif choice == "4":
-            q = input(f"  Enter time quantum [default {rr_quantum}]: ").strip()
-            rr_quantum = int(q) if q.isdigit() else rr_quantum
+            rr_quantum = read_positive_quantum(
+                f"  Enter time quantum [default {rr_quantum}]: ", rr_quantum)
             run_rr(processes, rr_quantum)
 
         elif choice == "5":

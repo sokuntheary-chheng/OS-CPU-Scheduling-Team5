@@ -22,10 +22,15 @@ def round_robin(processes, quantum=2):
     Round Robin scheduling with configurable time quantum.
     Args:
         processes : list of Process objects
-        quantum   : time slice per turn (default 2)
+        quantum   : time slice per turn (default 2). Must be >= 1, otherwise
+                    a process could be "executed" for 0 time units and the
+                    simulation would never advance (infinite loop).
     Returns:
         (gantt, processes_copy)
     """
+    if quantum < 1:
+        raise ValueError("Round Robin quantum must be a positive integer (>= 1).")
+
     procs = copy.deepcopy(processes)
 
     # Sort by arrival time for initial ordering
@@ -66,7 +71,10 @@ def round_robin(processes, quantum=2):
 
         gantt.append((process.pid, start, current_time))
 
-        # Enqueue processes that arrived during this quantum
+        # Enqueue processes that arrived during this quantum BEFORE re-adding
+        # the process that just ran. This preserves standard RR convention:
+        # a process that is preempted goes to the back of the line behind
+        # anyone who arrived while it was running.
         newly_arrived = [p for p in remaining if p.arrival_time <= current_time]
         for p in newly_arrived:
             queue.append(p)
@@ -77,7 +85,7 @@ def round_robin(processes, quantum=2):
             process.finish_time = current_time
             completed.append(process)
         else:
-            # Process not done; re-add to back of queue
+            # Process not done; re-add to back of queue (after new arrivals)
             queue.append(process)
 
     compute_metrics(completed)

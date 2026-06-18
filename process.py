@@ -53,17 +53,60 @@ def get_sample_processes():
     ]
 
 
+def _read_int(prompt, min_value=None):
+    """
+    Reads an integer from the console with validation.
+    Re-prompts on blank input, non-numeric input, or values below min_value,
+    instead of letting ValueError crash the whole program.
+    """
+    while True:
+        raw = input(prompt).strip()
+        if raw == "":
+            print("    -> This field is required. Please enter a number.")
+            continue
+        try:
+            value = int(raw)
+        except ValueError:
+            print(f"    -> '{raw}' is not a valid integer. Try again.")
+            continue
+        if min_value is not None and value < min_value:
+            print(f"    -> Value must be >= {min_value}. Try again.")
+            continue
+        return value
+
+
 def input_processes():
     """
     Prompts the user to enter processes manually via the terminal.
     Returns a list of Process objects.
+
+    Validation added:
+      - number of processes must be a positive integer (>= 1)
+      - arrival time must be an integer >= 0
+      - burst time must be an integer >= 1 (a process with 0 burst time
+        is meaningless for scheduling and breaks several algorithms)
+      - process IDs default to P<i> if left blank, and duplicate IDs are
+        rejected so PID-based sorting/metrics stay unambiguous
     """
     processes = []
     print("\n--- Process Input ---")
-    n = int(input("Enter number of processes: "))
+
+    n = _read_int("Enter number of processes: ", min_value=1)
+
+    used_pids = set()
     for i in range(n):
-        pid = input(f"  Process {i+1} ID (e.g. P{i+1}): ").strip()
-        arrival = int(input(f"  Arrival Time for {pid}: "))
-        burst = int(input(f"  Burst Time for {pid}: "))
+        default_pid = f"P{i + 1}"
+        pid = input(f"  Process {i + 1} ID (e.g. {default_pid}) "
+                     f"[default {default_pid}]: ").strip()
+        if pid == "":
+            pid = default_pid
+        while pid in used_pids:
+            print(f"    -> PID '{pid}' is already used. Please choose another.")
+            pid = input(f"  Process {i + 1} ID: ").strip() or default_pid
+        used_pids.add(pid)
+
+        arrival = _read_int(f"  Arrival Time for {pid}: ", min_value=0)
+        burst = _read_int(f"  Burst Time for {pid}: ", min_value=1)
         processes.append(Process(pid, arrival, burst))
+
     return processes

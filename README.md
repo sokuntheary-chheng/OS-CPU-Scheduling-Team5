@@ -1,151 +1,145 @@
 # OS CPU Scheduling Simulator — Team 5
 
-> A Python-based CPU scheduling simulator implementing FCFS, SJF, SRT, Round Robin, and MLFQ, with ASCII Gantt chart output and comparative metrics analysis.
+A Python command-line simulator for five CPU scheduling algorithms:
+**FCFS, SJF, SRT, Round Robin, and MLFQ**. It calculates Waiting Time,
+Turnaround Time, and Response Time per process, prints an ASCII Gantt
+chart, and compares all five algorithms side by side.
 
----
+```bash
+git clone https://github.com/sokuntheary-chheng/OS-CPU-Scheduling-Team5.git
+cd OS-CPU-Scheduling-Team5
+python3 main.py
+```
 
-## Team Members
-
-| Member | Name     | Student ID | Algorithm       |
-|--------|----------|------------|-----------------|
-| A      | Member A | id_a       | FCFS            |
-| B      | Member B | id_b       | SJF             |
-| C      | Member C | id_c       | SRT             |
-| D      | D        | d_id       | Round Robin, MLFQ |
-
-> **Edit here:** Replace Member A/B/C/D and id_a/id_b/id_c/d_id with real names and IDs.
+No installs needed — standard library only. Requires Python 3.8+.
 
 ---
 
 ## Project Structure
 
 ```
-OS-CPU-Scheduling-Team5/
-├── main.py        — Main entry point / interactive menu
-├── process.py     — Shared Process class and sample data
-├── display.py     — Gantt chart, metrics table, comparison utilities
-├── fcfs.py        — First Come First Serve (Member A)
-├── sjf.py         — Shortest Job First (Member B)
-├── srt.py         — Shortest Remaining Time (Member C)
-├── rr.py          — Round Robin (Member D)
-└── mlfq.py        — Multilevel Feedback Queue (Member D)
+main.py        # CLI menu / entry point
+process.py     # Process class + sample scenario + input validation
+display.py     # Gantt chart + metrics table + metrics calculation
+fcfs.py        # First Come First Serve
+sjf.py         # Shortest Job First
+srt.py         # Shortest Remaining Time
+rr.py          # Round Robin
+mlfq.py        # Multilevel Feedback Queue
 ```
 
 ---
 
-## Setup & Installation
+## Team & Task Division
 
-**Requirements:** Python 3.7 or higher. No external libraries needed.
+| Member | Name | Student ID | Algorithm(s) |
+|--------|------|------------|--------------|
+| A | Member A | | FCFS, SJF |
+| B | Member B | | SRT |
+| C | Member C | | Round Robin |
+| D | Chheng Sokuntheary | p20240044 | MLFQ |
 
-```bash
-# Clone the repository
-git clone https://github.com/sokuntheary-chheng/OS-CPU-Scheduling-Team5.git
-cd OS-CPU-Scheduling-Team5
+**What "owning" an algorithm means, for everyone:**
 
-# Run the simulator
-python main.py
-```
+1. `git pull` the latest code.
+2. Open your file(s) and read `process.py` + `display.py` first — every
+   algorithm shares the `Process` class and the metrics/Gantt-printing
+   functions, so don't duplicate that logic inside your own file.
+3. Run `python3 main.py`, pick your algorithm's menu option, and check
+   your output against the **Sample Output** table below.
+4. Write your subsection of the **Project Report** (Section 3 — design and
+   logic for your algorithm(s)).
+5. Be ready to explain your code on camera for the video presentation.
 
----
+### Member A — FCFS, SJF
+- Files: `fcfs.py`, `sjf.py`
+- FCFS: processes run strictly in arrival order, no preemption.
+- SJF: shortest *burst* time among arrived processes runs next (non-preemptive — once it starts, it finishes). Note: SJF can starve long processes; that's expected, not a bug.
+- Report: write Section 3.2 (FCFS) and 3.3 (SJF).
 
-## How to Run Each Scheduler
+### Member B — SRT
+- File: `srt.py`
+- Preemptive version of SJF — re-checks every tick which process has the least *remaining* time. `compress_gantt()` merges the tick-by-tick trace into readable Gantt segments; don't remove that call.
+- Report: write Section 3.4 (SRT), including why it needs tick-by-tick simulation.
 
-### Interactive Menu (recommended)
+### Member C — Round Robin
+- File: `rr.py`
+- Fixed time quantum per turn, circular ready queue (`deque`). New arrivals join the queue before a preempted process gets re-added — that's intentional, matches standard RR convention.
+- Try changing the quantum (menu option 4 prompts for it) and see how it affects average waiting vs. response time.
+- Report: write Section 3.5 (Round Robin).
 
-```bash
-python main.py
-```
-
-Then choose from the menu:
-- `1` — FCFS
-- `2` — SJF
-- `3` — SRT
-- `4` — Round Robin (prompts for quantum)
-- `5` — MLFQ
-- `6` — Run ALL and compare
-- `7` — Enter custom processes
-- `0` — Exit
-
-### Run a single algorithm directly (Python)
-
-```python
-from process import get_sample_processes
-from rr import run_rr
-from mlfq import run_mlfq
-
-processes = get_sample_processes()
-run_rr(processes, quantum=2)
-run_mlfq(processes, q0=2, q1=4)
-```
-
----
-
-## Algorithms Implemented
-
-### 1. First Come First Serve (FCFS) — `fcfs.py`
-Processes execute in arrival order. Non-preemptive. Simple but can cause the **convoy effect** where short processes wait behind long ones.
-
-### 2. Shortest Job First (SJF) — `sjf.py`
-At each scheduling point, the arrived process with the shortest burst time runs next. Non-preemptive. Minimizes average waiting time but can cause **starvation** of long processes.
-
-### 3. Shortest Remaining Time (SRT) — `srt.py`
-Preemptive version of SJF. At every tick, if a newly arrived process has shorter remaining time than the running process, a context switch occurs. Best average turnaround time but high context switch overhead.
-
-### 4. Round Robin (RR) — `rr.py`
-Each process receives a fixed time quantum (default: 2). If not finished, it is preempted and re-queued. Ensures **fairness** and great response time. Higher average waiting time for short jobs.
-
-### 5. Multilevel Feedback Queue (MLFQ) — `mlfq.py`
-Three-level queue system:
-- **Q0**: Round Robin, quantum = 2 (highest priority, new arrivals)
-- **Q1**: Round Robin, quantum = 4
-- **Q2**: FCFS (runs to completion)
-
-Processes are **demoted** if they use their full quantum. **Aging** promotes waiting processes to prevent starvation (threshold: 10 ticks).
+### Member D (Chheng Sokuntheary) — MLFQ
+- File: `mlfq.py`
+- 3 queues: Q0 = RR(quantum 2), Q1 = RR(quantum 4), Q2 = FCFS. Demotes a process that uses its full quantum; promotes ("ages") a process that's waited 10+ ticks in Q1/Q2 back up one level.
+- Already reviewed and fixed: quantum validation (prevents an infinite loop if quantum ≤ 0), empty-input guard, and an audited (not actually broken, but clarified) aging function — see comments at the top of `mlfq.py` for details.
+- Note: MLFQ does **not** interrupt a process mid-slice if a higher-priority process arrives — documented as a deliberate scope decision in the code comments, not a bug.
+- Report: write Section 3.6 (MLFQ) — this is one of the two "complex algorithms" the video needs a walkthrough of.
 
 ---
 
-## Sample Scenario
+## How to Run
 
-**Input:**
-| PID | Arrival Time | Burst Time |
-|-----|-------------|------------|
-| P1  | 0           | 5          |
-| P2  | 1           | 3          |
-| P3  | 2           | 8          |
-| P4  | 3           | 6          |
-
-**Config:** RR Quantum = 2, MLFQ: Q0=2, Q1=4, Q2=FCFS
-
-**Sample Output (FCFS):**
 ```
-  Gantt Chart:
-  -------------------------
-  |  P1 |  P2 |  P3 |  P4 |
-  -------------------------
-  0     5     8     16    22
-
-  PID    Arrival    Burst    Waiting    Turnaround    Response
-  P1     0          5        0          5             0
-  P2     1          3        4          7             4
-  P3     2          8        6          14            6
-  P4     3          6        13         19            13
-  Average                    5.75       11.25         5.75
+1. FCFS
+2. SJF
+3. SRT
+4. Round Robin       (asks for time quantum, default 2)
+5. MLFQ               (Q0 quantum=2, Q1 quantum=4, aging threshold=10)
+6. Run ALL algorithms (comparison table)
+7. Enter custom processes (replaces the default sample scenario)
+0. Exit
 ```
 
-**Comparative Results:**
-| Algorithm     | Avg Waiting | Avg Turnaround | Avg Response |
-|---------------|-------------|----------------|--------------|
-| FCFS          | 5.75        | 11.25          | 5.75         |
-| SJF           | 5.25        | 10.75          | 5.25         |
-| SRT           | 5.00        | 10.50          | 4.25         |
-| RR (q=2)      | 9.75        | 15.25          | 2.00         |
-| MLFQ          | 9.25        | 14.75          | 1.50         |
+The simulator starts pre-loaded with the sample scenario below, so you can
+hit `6` immediately after launch and see every algorithm's results with no
+typing required.
+
+## Sample Scenario (default on launch)
+
+| Process | Arrival | Burst |
+|---------|---------|-------|
+| P1 | 0 | 5 |
+| P2 | 1 | 3 |
+| P3 | 2 | 8 |
+| P4 | 3 | 6 |
+
+## Sample Output (option 6)
+
+```
+COMPARATIVE ANALYSIS - Average Metrics
+======================================================================
+Algorithm                      Avg Waiting     Avg Turnaround     Avg Response
+----------------------------------------------------------------------
+FCFS                           5.75            11.25              5.75
+SJF (Non-Preemptive)           5.25            10.75              5.25
+SRT (Preemptive)               5.00            10.50              4.25
+Round Robin (q=2)              9.75            15.25              2.00
+MLFQ (q0=2,q1=4)               9.25            14.75              1.50
+======================================================================
+```
+
+If your numbers don't match this table after pulling the latest code,
+something changed — flag it in the group chat before writing your report
+section, since the report's data needs to match what the code actually
+produces.
 
 ---
 
-## Key Findings
+## Before Final Submission (everyone)
 
-- **SRT** achieves the lowest average waiting and turnaround times
-- **MLFQ** achieves the best average response time (1.50), even better than pure RR
-- **FCFS** is the simplest but performs worst on response time for late-arriving processes
-- **RR and MLFQ** trade higher waiting time for significantly better responsiveness
+- [ ] Names + Student IDs filled in above and in the report title page
+- [ ] Re-run `python3 main.py` → option `6` on a fresh pull, confirm it still matches the Sample Output table
+- [ ] Repo name: `OS-CPU-Scheduling-Team5`
+- [ ] Report filename: `CPU_Scheduling_Report_Team5.pdf`
+- [ ] YouTube title: `OS CPU Scheduling Project - Team5`, everyone speaks in it
+- [ ] Report PDF (with clickable Git + YouTube links on the title page) submitted to Moodle
+- [ ] Each member submits their peer evaluation privately
+
+---
+
+## Known Limitations (worth mentioning in the report, not hiding)
+
+- MLFQ doesn't preempt mid-slice — a process always finishes its current quantum even if a higher-priority process arrives during it.
+- SRT is tick-by-tick (`O(total_time × n)`), fine for this assignment's scale but not built for very large burst times.
+- All tie-breaks (equal burst/remaining time, equal arrival) fall back to Process ID order.
+- Custom input (option 7) validates: ≥1 process, burst ≥ 1, arrival ≥ 0, no duplicate PIDs.

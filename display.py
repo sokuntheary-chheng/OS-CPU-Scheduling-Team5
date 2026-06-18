@@ -38,11 +38,22 @@ def print_metrics_table(processes):
     """
     Prints a formatted table of scheduling metrics for each process.
     Columns: PID, Arrival, Burst, Start, Finish, Waiting, Turnaround, Response
+
+    Fix: guards against an empty process list. Previously this divided by
+    n = len(processes) unconditionally, which raised ZeroDivisionError
+    whenever an algorithm was run with zero processes (e.g. after entering
+    "0" at the "Enter number of processes" prompt).
     """
     print("\n  Scheduling Metrics:")
     header = f"  {'PID':<6} {'Arrival':<10} {'Burst':<8} {'Start':<8} {'Finish':<9} {'Waiting':<10} {'Turnaround':<13} {'Response':<10}"
     print(header)
     print("  " + "-" * (len(header) - 2))
+
+    if not processes:
+        print("  (no processes to display)")
+        print("  " + "-" * (len(header) - 2))
+        print()
+        return
 
     total_wt = total_tat = total_rt = 0
     for p in processes:
@@ -74,8 +85,16 @@ def compute_metrics(processes):
 
 
 def print_averages(processes):
-    """Returns dict of average metrics."""
+    """
+    Returns dict of average metrics.
+
+    Fix: guards against an empty process list (was: unconditional division
+    by n = len(processes), which crashes when processes == []).
+    """
     n = len(processes)
+    if n == 0:
+        return {"avg_waiting": 0.0, "avg_turnaround": 0.0, "avg_response": 0.0}
+
     avg_wt  = sum(p.waiting_time    for p in processes) / n
     avg_tat = sum(p.turnaround_time for p in processes) / n
     avg_rt  = sum(p.response_time   for p in processes) / n
