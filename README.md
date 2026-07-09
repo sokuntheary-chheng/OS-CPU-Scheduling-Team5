@@ -34,10 +34,8 @@ mlfq.py        # Multilevel Feedback Queue
 
 | Member | Name | Student ID | Algorithm(s) |
 |--------|------|------------|--------------|
-| A | Member A | | FCFS, SJF |
-| B | Member B | | SRT |
-| C | Member C | | Round Robin |
-| D | Chheng Sokuntheary | p20240044 | MLFQ |
+| A | Kong Sonphana | | FCFS, SJF, SRT |
+| B | Chheng Sokuntheary | p20240044 | Round Robin, MLFQ |
 
 **What "owning" an algorithm means, for everyone:**
 
@@ -52,13 +50,11 @@ mlfq.py        # Multilevel Feedback Queue
 5. Be ready to explain your code on camera for the video presentation.
 
 ### Member A — FCFS, SJF
-- Files: `fcfs.py`, `sjf.py`
+- Files: `fcfs.py`, `sjf.py`, `srt.py`
 - FCFS: processes run strictly in arrival order, no preemption.
 - SJF: shortest *burst* time among arrived processes runs next (non-preemptive — once it starts, it finishes). Note: SJF can starve long processes; that's expected, not a bug.
 - Report: write Section 3.2 (FCFS) and 3.3 (SJF).
 
-### Member B — SRT
-- File: `srt.py`
 - Preemptive version of SJF — re-checks every tick which process has the least *remaining* time. `compress_gantt()` merges the tick-by-tick trace into readable Gantt segments; don't remove that call.
 - Report: write Section 3.4 (SRT), including why it needs tick-by-tick simulation.
 
