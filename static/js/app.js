@@ -84,3 +84,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 });
+
+  const algoSelect = document.getElementById('algorithm');
+  const quantumGroup = document.getElementById('quantum-group');
+  const q0Group = document.getElementById('q0-group');
+  const q1Group = document.getElementById('q1-group');
+
+  function updateQuantumVisibility() {
+    const algo = algoSelect.value;
+    quantumGroup.style.display = 'none';
+    q0Group.style.display = 'none';
+    q1Group.style.display = 'none';
+
+    if (algo === 'RR') {
+      quantumGroup.style.display = 'block';
+    } else if (algo === 'MLFQ') {
+      q0Group.style.display = 'block';
+      q1Group.style.display = 'block';
+    }
+  }
+
+  algoSelect.addEventListener('change', updateQuantumVisibility);
+  updateQuantumVisibility();
