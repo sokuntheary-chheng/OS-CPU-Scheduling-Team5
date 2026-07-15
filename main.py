@@ -5,15 +5,18 @@
 # Run: python main.py
 # =============================================================================
 
-from process import get_sample_processes, input_processes, Process
-from fcfs  import run_fcfs
-from sjf   import run_sjf
-from srt   import run_srt
-from rr    import run_rr
-from mlfq  import run_mlfq
+from process import get_sample_processes, Process
+import fcfs as fcfs_mod
+import sjf as sjf_mod
+import srt as srt_mod
+import rr as rr_mod
+import mlfq as mlfq_mod
 from display import print_averages
-import csv
+
+# Web UI: Flask-based server
+from flask import Flask, render_template, request, jsonify
 import json
+import os
 
 
 MENU = """
@@ -101,103 +104,95 @@ def load_from_json(filename):
         burst_time=p['burst']
     ) for p in data]
 
-def main():
-    # Default: use sample scenario from project brief
-    processes = get_sample_processes()
-    rr_quantum   = 2
-    mlfq_q0, mlfq_q1 = 2, 4
+def processes_from_payload(data):
+    procs = []
+    for p in data:
+        procs.append(Process(pid=p.get('pid'), arrival_time=int(p.get('arrival')),
+                             burst_time=int(p.get('burst'))))
+    return procs
 
-    print(MENU)
-    print(f"  [Default Input] P1(0,5), P2(1,3), P3(2,8), P4(3,6) | RR Quantum={rr_quantum}")
 
-    while True:
-        # The menu reprints automatically every loop, same as before -- but
-        # now every algorithm call is followed by pause(), which blocks on
-        # input() until the user presses Enter. That's what actually fixes
-        # the "output disappears" issue: the Gantt chart / metrics table
-        # stays on screen, fully read, BEFORE the menu reprints underneath
-        # it and scrolls it up. Without that pause, the menu could reprint
-        # immediately after a fast algorithm run and push results out of
-        # view before the user had a chance to read them.
-        choice = input("  Select option: ").strip()
+def make_app(static_folder='static', template_folder='templates'):
+    app = Flask(__name__, static_folder=static_folder, template_folder=template_folder)
 
-        if not processes and choice in ("1", "2", "3", "4", "5", "6"):
-            print("  No processes loaded. Use option 7 to enter processes first.")
-            print(MENU)
-            continue
+    @app.route('/')
+    def index():
+        return render_template('index.html')
 
-        if choice == "1":
-            run_fcfs(processes)
-            pause()
+    @app.route('/api/run', methods=['POST'])
+    def api_run():
+        body = request.get_json()
+        algo = body.get('algorithm')
+        procs = processes_from_payload(body.get('processes', []))
+        rr_q = int(body.get('quantum', 2))
+        q0 = int(body.get('q0', 2))
+        q1 = int(body.get('q1', 4))
 
-        elif choice == "2":
-            run_sjf(processes)
-            pause()
+        try:
+            if algo == 'FCFS':
+                gantt, results = fcfs_mod.fcfs(procs)
+            elif algo == 'SJF':
+                gantt, results = sjf_mod.sjf(procs)
+            elif algo == 'SRT':
+                gantt, results = srt_mod.srt(procs)
+            elif algo == 'RR':
+                gantt, results = rr_mod.round_robin(procs, rr_q)
+            elif algo == 'MLFQ':
+                gantt, results = mlfq_mod.mlfq(procs, q0, q1)
+            else:
+                return jsonify({'error': 'Unknown algorithm'}), 400
 
-        elif choice == "3":
-            run_srt(processes)
-            pause()
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
-        elif choice == "4":
-            rr_quantum = read_positive_quantum(
-                f"  Enter time quantum [default {rr_quantum}]: ", rr_quantum)
-            run_rr(processes, rr_quantum)
-            pause()
-
-        elif choice == "5":
-            run_mlfq(processes, mlfq_q0, mlfq_q1)
-            pause()
-
-        elif choice == "6":
-            print("\n  Running all algorithms on current process set...\n")
-            _, fcfs_procs  = run_fcfs(processes)
-            _, sjf_procs   = run_sjf(processes)
-            _, srt_procs   = run_srt(processes)
-            _, rr_procs    = run_rr(processes, rr_quantum)
-            _, mlfq_procs  = run_mlfq(processes, mlfq_q0, mlfq_q1)
-
-            print_comparison({
-                "FCFS"                      : fcfs_procs,
-                "SJF (Non-Preemptive)"      : sjf_procs,
-                "SRT (Preemptive)"          : srt_procs,
-                f"Round Robin (q={rr_quantum})"     : rr_procs,
-                f"MLFQ (q0={mlfq_q0},q1={mlfq_q1})": mlfq_procs,
+        # Serialize processes
+        proc_list = []
+        for p in results:
+            proc_list.append({
+                'pid': p.pid,
+                'arrival': p.arrival_time,
+                'burst': p.burst_time,
+                'start': p.start_time,
+                'finish': p.finish_time,
+                'waiting': p.waiting_time,
+                'turnaround': p.turnaround_time,
+                'response': p.response_time,
             })
-            pause()
 
-        elif choice == "7":
-            processes = input_processes()
-            print(f"\n  Loaded {len(processes)} process(es).")
+        avgs = print_averages(results)
 
-        elif choice == "8":
-            filename = input("  Enter CSV filename (e.g. processes.csv): ").strip()
-            try:
-                processes = load_from_csv(filename)
-                print(f"\n  [✓] Loaded {len(processes)} process(es) from {filename}.")
-            except FileNotFoundError:
-                print(f"  [!] File '{filename}' not found.")
-            except Exception as e:
-                print(f"  [!] Error reading CSV: {e}")
+        return jsonify({'gantt': gantt, 'processes': proc_list, 'averages': avgs})
 
-        elif choice == "9":
-            filename = input("  Enter JSON filename (e.g. processes.json): ").strip()
-            try:
-                processes = load_from_json(filename)
-                print(f"\n  [✓] Loaded {len(processes)} process(es) from {filename}.")
-            except FileNotFoundError:
-                print(f"  [!] File '{filename}' not found.")
-            except Exception as e:
-                print(f"  [!] Error reading JSON: {e}")
+    @app.route('/api/compare', methods=['POST'])
+    def api_compare():
+        body = request.get_json()
+        procs = processes_from_payload(body.get('processes', []))
+        rr_q = int(body.get('quantum', 2))
+        q0 = int(body.get('q0', 2))
+        q1 = int(body.get('q1', 4))
 
-        elif choice == "0":
-            print("\n  Exiting simulator. Goodbye!\n")
-            break
+        try:
+            _, fcfs_procs = fcfs_mod.fcfs(procs)
+            _, sjf_procs  = sjf_mod.sjf(procs)
+            _, srt_procs  = srt_mod.srt(procs)
+            _, rr_procs   = rr_mod.round_robin(procs, rr_q)
+            _, mlfq_procs = mlfq_mod.mlfq(procs, q0, q1)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
-        else:
-            print("  Invalid option. Please try again.")
+        return jsonify({
+            'FCFS': print_averages(fcfs_procs),
+            'SJF': print_averages(sjf_procs),
+            'SRT': print_averages(srt_procs),
+            'RR': print_averages(rr_procs),
+            'MLFQ': print_averages(mlfq_procs),
+        })
 
-        print(MENU)
+    return app
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    # Launch Flask app when running `python main.py`
+    app = make_app()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)

@@ -1,0 +1,16 @@
+body { background: #f6f8fb; }
+.sidebar { background: #ffffff; border-right: 1px solid #e6e9ef; min-height: 100vh; }
+.main { background: #ffffff; min-height: 100vh; }
+.metrics { background: #ffffff; border-left: 1px solid #e6e9ef; min-height: 100vh; }
+.gantt-area { background: #fdfdfd; border: 1px solid #e9edf3; height: 220px; overflow-x: auto; position: relative; }
+.gantt-bar { position: absolute; height: 28px; border-radius: 4px; color: #fff; display:flex; align-items:center; padding-left:6px; font-weight:600; }
+.gantt-row { height: 36px; }
+
+.proc-badge { display:inline-block; padding:4px 8px; border-radius:4px; color:#fff; font-weight:700; }
+
+/* Colors for processes */
+.color-P1 { background:#007bff; }
+.color-P2 { background:#28a745; }
+.color-P3 { background:#ff8c00; }
+.color-P4 { background:#6f42c1; }
+.color-P5 { background:#17a2b8; }
