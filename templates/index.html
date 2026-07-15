@@ -49,25 +49,51 @@
         </div>
 
         <div class="col-6 main p-3">
-          <h5>Process Table</h5>
-          <table class="table table-sm" id="procTable">
-            <thead>
-              <tr><th>PID</th><th>Arrival</th><th>Burst</th><th></th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+          <div class="section-block mb-4">
+            <div class="section-header">
+              <h5 class="mb-0">Process Table</h5>
+            </div>
+            <div class="section-body pt-3">
+              <table class="table table-sm" id="procTable">
+                <thead>
+                  <tr><th>PID</th><th>Arrival</th><th>Burst</th><th></th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
 
-          <h5 class="mt-3">Execution Timeline (Gantt Chart)</h5>
-          <div id="gantt" class="gantt-area"></div>
+          <div class="section-block">
+            <div class="section-header">
+              <h5 class="mb-0">Execution Timeline (Gantt Chart)</h5>
+            </div>
+            <div class="section-body pt-3">
+              <div id="gantt" class="gantt-area"></div>
+            </div>
+          </div>
         </div>
 
         <div class="col-3 metrics p-3">
           <h5>Performance Metrics</h5>
           <canvas id="perfChart" height="120"></canvas>
-          <div class="mt-3">
-            <div class="card mb-2"><div class="card-body p-2"><strong>Average Waiting Time:</strong> <span id="avgWaiting">-</span></div></div>
-            <div class="card mb-2"><div class="card-body p-2"><strong>Average Turnaround Time:</strong> <span id="avgTurnaround">-</span></div></div>
-            <div class="card"><div class="card-body p-2"><strong>CPU Utilization:</strong> <span id="cpuUtil">-</span></div></div>
+          <div class="metrics-card mt-3">
+            <div class="metrics-card-header">
+              <h6 class="mb-0">Summary</h6>
+            </div>
+            <div class="metrics-card-body">
+              <div class="metric-item">
+                <div class="metric-label">Average Waiting Time</div>
+                <div class="metric-value" id="avgWaiting">-</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-label">Average Turnaround Time</div>
+                <div class="metric-value" id="avgTurnaround">-</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-label">CPU Utilization</div>
+                <div class="metric-value" id="cpuUtil">-</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

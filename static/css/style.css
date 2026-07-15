@@ -1,8 +1,20 @@
 body { background: #f6f8fb; }
-.sidebar { background: #ffffff; border-right: 1px solid #e6e9ef; min-height: 100vh; }
-.main { background: #ffffff; min-height: 100vh; }
-.metrics { background: #ffffff; border-left: 1px solid #e6e9ef; min-height: 100vh; }
-.gantt-area { background: #fdfdfd; border: 1px solid #e9edf3; height: 220px; overflow-x: auto; position: relative; }
+.app-root .row { align-items: flex-start; }
+.sidebar, .main, .metrics { background: #ffffff; min-height: 100vh; display: flex; flex-direction: column; }
+.sidebar { border-right: 1px solid #e6e9ef; }
+.metrics { border-left: 1px solid #e9edf3; }
+.section-block { background: #ffffff; border: 1px solid #e6e9ef; border-radius: 12px; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04); padding: 1rem; }
+.section-block + .section-block { margin-top: 1.5rem; }
+.section-header { border-bottom: 1px solid #ebeff4; padding-bottom: 0.75rem; margin-bottom: 0.75rem; }
+.metrics-card { background: #f8fbff; border: 1px solid #dbe7f2; border-radius: 14px; padding: 1rem; margin-top: 1.5rem; }
+.metrics-card-header { border-bottom: 1px solid #e6edf3; padding-bottom: 0.75rem; margin-bottom: 1rem; }
+.metrics-card-header h6 { font-size: 0.95rem; letter-spacing: 0.02em; color: #1f2937; }
+.metrics-card-body { display: grid; gap: 0.9rem; }
+.metric-item { background: #ffffff; border: 1px solid #e9edf3; border-radius: 10px; padding: 0.95rem 1rem; }
+.metric-label { color: #55606b; font-size: 0.88rem; font-weight: 700; margin-bottom: 0.4rem; }
+.metric-value { color: #111827; font-size: 1.35rem; font-weight: 700; }
+.gantt-area { background: #fdfdfd; border: 1px solid #e9edf3; border-radius: 12px; min-height: 220px; overflow-x: auto; position: relative; padding: 1rem; }
+.gantt-area:empty::before { content: 'No execution timeline yet. Run a simulation to see the Gantt chart.'; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 0.95rem; height: 100%; text-align: center; padding: 0 1rem; }
 .gantt-bar { position: absolute; height: 28px; border-radius: 4px; color: #fff; display:flex; align-items:center; padding-left:6px; font-weight:600; }
 .gantt-row { height: 36px; }
 
