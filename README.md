@@ -34,7 +34,7 @@ mlfq.py        # Multilevel Feedback Queue
 
 | Member | Name | Student ID | Algorithm(s) |
 |--------|------|------------|--------------|
-| A | Kong Sonphana | | FCFS, SJF, SRT |
+| A | Kong Sonphana | p20240063 | FCFS, SJF, SRT |
 | B | Chheng Sokuntheary | p20240044 | Round Robin, MLFQ |
 
 **What "owning" an algorithm means, for everyone:**
@@ -49,27 +49,20 @@ mlfq.py        # Multilevel Feedback Queue
    logic for your algorithm(s)).
 5. Be ready to explain your code on camera for the video presentation.
 
-### Member A — FCFS, SJF
+### Member A (Kong Sonphana) — FCFS, SJF, SRT
 - Files: `fcfs.py`, `sjf.py`, `srt.py`
 - FCFS: processes run strictly in arrival order, no preemption.
 - SJF: shortest *burst* time among arrived processes runs next (non-preemptive — once it starts, it finishes). Note: SJF can starve long processes; that's expected, not a bug.
-- Report: write Section 3.2 (FCFS) and 3.3 (SJF).
+- SRT: preemptive version of SJF — re-checks every tick which process has the least *remaining* time. `compress_gantt()` merges the tick-by-tick trace into readable Gantt segments; don't remove that call.
+- Report: write Section 3.2 (FCFS), 3.3 (SJF), and 3.4 (SRT), including why SRT needs tick-by-tick simulation.
 
-- Preemptive version of SJF — re-checks every tick which process has the least *remaining* time. `compress_gantt()` merges the tick-by-tick trace into readable Gantt segments; don't remove that call.
-- Report: write Section 3.4 (SRT), including why it needs tick-by-tick simulation.
-
-### Member C — Round Robin
-- File: `rr.py`
-- Fixed time quantum per turn, circular ready queue (`deque`). New arrivals join the queue before a preempted process gets re-added — that's intentional, matches standard RR convention.
-- Try changing the quantum (menu option 4 prompts for it) and see how it affects average waiting vs. response time.
-- Report: write Section 3.5 (Round Robin).
-
-### Member D (Chheng Sokuntheary) — MLFQ
-- File: `mlfq.py`
-- 3 queues: Q0 = RR(quantum 2), Q1 = RR(quantum 4), Q2 = FCFS. Demotes a process that uses its full quantum; promotes ("ages") a process that's waited 10+ ticks in Q1/Q2 back up one level.
-- Already reviewed and fixed: quantum validation (prevents an infinite loop if quantum ≤ 0), empty-input guard, and an audited (not actually broken, but clarified) aging function — see comments at the top of `mlfq.py` for details.
+### Member B (Chheng Sokuntheary) — Round Robin, MLFQ
+- Files: `rr.py`, `mlfq.py`
+- Round Robin: fixed time quantum per turn, circular ready queue (`deque`). New arrivals join the queue before a preempted process gets re-added — that's intentional, matches standard RR convention. Try changing the quantum (menu option 4 prompts for it) and see how it affects average waiting vs. response time.
+- MLFQ: 3 queues: Q0 = RR(quantum 2), Q1 = RR(quantum 4), Q2 = FCFS. Demotes a process that uses its full quantum; promotes ("ages") a process that's waited 10+ ticks in Q1/Q2 back up one level.
+- Already reviewed and fixed (MLFQ): quantum validation (prevents an infinite loop if quantum ≤ 0), empty-input guard, and an audited (not actually broken, but clarified) aging function — see comments at the top of `mlfq.py` for details.
 - Note: MLFQ does **not** interrupt a process mid-slice if a higher-priority process arrives — documented as a deliberate scope decision in the code comments, not a bug.
-- Report: write Section 3.6 (MLFQ) — this is one of the two "complex algorithms" the video needs a walkthrough of.
+- Report: write Section 3.5 (Round Robin) and 3.6 (MLFQ) — MLFQ is one of the two "complex algorithms" the video needs a walkthrough of.
 
 ---
 

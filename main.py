@@ -5,13 +5,15 @@
 # Run: python main.py
 # =============================================================================
 
-from process import get_sample_processes, input_processes
+from process import get_sample_processes, input_processes, Process
 from fcfs  import run_fcfs
 from sjf   import run_sjf
 from srt   import run_srt
 from rr    import run_rr
 from mlfq  import run_mlfq
 from display import print_averages
+import csv
+import json
 
 
 MENU = """
@@ -25,6 +27,8 @@ MENU = """
 ║  5. Multilevel Feedback Queue (MLFQ)         ║
 ║  6. Run ALL algorithms (comparison)          ║
 ║  7. Change input (custom processes)          ║
+║  8. Load processes from CSV file             ║
+║  9. Load processes from JSON file            ║
 ║  0. Exit                                     ║
 ╚══════════════════════════════════════════════╝
 """
@@ -76,6 +80,26 @@ def pause():
     """
     input("\n  Press Enter to continue...")
 
+def load_from_csv(filename):
+    processes = []
+    with open(filename, newline='') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            processes.append(Process(
+                pid=row['pid'],
+                arrival_time=int(row['arrival']),
+                burst_time=int(row['burst'])
+            ))
+    return processes
+
+def load_from_json(filename):
+    with open(filename) as f:
+        data = json.load(f)
+    return [Process(
+        pid=p['pid'],
+        arrival_time=p['arrival'],
+        burst_time=p['burst']
+    ) for p in data]
 
 def main():
     # Default: use sample scenario from project brief
@@ -144,6 +168,26 @@ def main():
         elif choice == "7":
             processes = input_processes()
             print(f"\n  Loaded {len(processes)} process(es).")
+
+        elif choice == "8":
+            filename = input("  Enter CSV filename (e.g. processes.csv): ").strip()
+            try:
+                processes = load_from_csv(filename)
+                print(f"\n  [✓] Loaded {len(processes)} process(es) from {filename}.")
+            except FileNotFoundError:
+                print(f"  [!] File '{filename}' not found.")
+            except Exception as e:
+                print(f"  [!] Error reading CSV: {e}")
+
+        elif choice == "9":
+            filename = input("  Enter JSON filename (e.g. processes.json): ").strip()
+            try:
+                processes = load_from_json(filename)
+                print(f"\n  [✓] Loaded {len(processes)} process(es) from {filename}.")
+            except FileNotFoundError:
+                print(f"  [!] File '{filename}' not found.")
+            except Exception as e:
+                print(f"  [!] Error reading JSON: {e}")
 
         elif choice == "0":
             print("\n  Exiting simulator. Goodbye!\n")
