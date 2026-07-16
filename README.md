@@ -19,9 +19,7 @@
 
 ## Project Structure
 
-Tree of all files with one-line description each:
-
-```text
+```
 OS-CPU-Scheduling-Team5/
 ├── main.py                  # Flask entry point and API routes for the web UI
 ├── process.py               # Process model and shared process helpers
@@ -31,13 +29,20 @@ OS-CPU-Scheduling-Team5/
 ├── srt.py                   # Shortest Remaining Time scheduling logic
 ├── rr.py                    # Round Robin scheduling logic
 ├── mlfq.py                  # Multilevel Feedback Queue scheduling logic
-├── templates/index.html     # Main dashboard layout for the web interface
-├── static/css/style.css     # Styling for the simulator dashboard
-├── static/js/app.js         # Frontend logic for interactions and rendering
-├── processes.csv           # Sample CSV input file
-└── processes.json          # Sample JSON input file
+├── templates/
+│   └── index.html           # Main dashboard layout for the web interface
+├── static/
+│   ├── css/
+│   │   └── style.css        # Styling for the simulator dashboard
+│   └── js/
+│       └── app.js           # Frontend logic for interactions and rendering
+├── processes.csv            # Sample CSV input file
+├── processes.json           # Sample JSON input file
+├── requirements.txt         # Python dependencies (Flask)
+├── Todo.json                # Project metadata
+├── script.md                # Notes and script outline for video presentation
+└── .gitignore               # Excludes __pycache__, .venv, logs from tracking
 ```
-
 ## Web Interface
 
 Describe the 3-panel dashboard:
