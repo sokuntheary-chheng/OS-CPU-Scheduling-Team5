@@ -1,12 +1,5 @@
 # OS CPU Scheduling Simulator — Team 5
 
-A Python command-line simulator for five CPU scheduling algorithms:
-**FCFS, SJF, SRT, Round Robin, and MLFQ**. It calculates Waiting Time,
-Turnaround Time, and Response Time per process, prints an ASCII Gantt
-chart, and compares all five algorithms side by side.
-
----
-
 ## Team Members
 
 | Member | Name | Student ID | Algorithm(s) |
@@ -14,146 +7,77 @@ chart, and compares all five algorithms side by side.
 | A | Kong Sonphana | p20240063 | FCFS, SJF, SRT |
 | B | Chheng Sokuntheary | p20240044 | Round Robin, MLFQ |
 
----
-
 ## Setup & Installation
 
-**Requirements:** Python 3.8 or higher — no external libraries needed (standard library only).
+- Requirements: Python 3.8+, Flask
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/sokuntheary-chheng/OS-CPU-Scheduling-Team5.git
+- pip install -r requirements.txt
 
-# 2. Navigate into the project folder
-cd OS-CPU-Scheduling-Team5
+- python main.py then open [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
-# 3. Run the simulator
-python3 main.py
-```
-
-> **Windows users:** use `python main.py` instead of `python3 main.py` if Python 3 is your default.
-
----
+- Also works as terminal: explain how but note web UI is the primary interface
 
 ## Project Structure
 
-```
+Tree of all files with one-line description each:
+
+```text
 OS-CPU-Scheduling-Team5/
-│
-├── main.py        # CLI menu and entry point
-├── process.py     # Process class, sample scenario, and input validation
-├── display.py     # Gantt chart, metrics table, and metrics calculation
-├── fcfs.py        # First Come First Serve
-├── sjf.py         # Shortest Job First (Non-Preemptive)
-├── srt.py         # Shortest Remaining Time (Preemptive)
-├── rr.py          # Round Robin
-├── mlfq.py        # Multilevel Feedback Queue
-│
-├── processes.csv  # Sample CSV input file
-├── processes.json # Sample JSON input file
-└── README.md      # This file
+├── main.py                  # Flask entry point and API routes for the web UI
+├── process.py               # Process model and shared process helpers
+├── display.py               # Metrics and display formatting for scheduler results
+├── fcfs.py                  # First Come First Serve scheduling logic
+├── sjf.py                   # Shortest Job First scheduling logic
+├── srt.py                   # Shortest Remaining Time scheduling logic
+├── rr.py                    # Round Robin scheduling logic
+├── mlfq.py                  # Multilevel Feedback Queue scheduling logic
+├── templates/index.html     # Main dashboard layout for the web interface
+├── static/css/style.css     # Styling for the simulator dashboard
+├── static/js/app.js         # Frontend logic for interactions and rendering
+├── processes.csv           # Sample CSV input file
+└── processes.json          # Sample JSON input file
 ```
 
----
+## Web Interface
 
-## How to Run Each Scheduler
+Describe the 3-panel dashboard:
 
-When you launch `python3 main.py`, the simulator starts pre-loaded with the
-sample scenario (P1–P4). You can immediately press `6` to run all algorithms
-at once, or select any individual algorithm from the menu.
+- Left: Scheduler Configuration (algorithm selector, process input form, Load CSV/JSON button, Add Process, Run Simulation, Reset buttons)
 
-```
-╔══════════════════════════════════════════════╗
-║     OS CPU SCHEDULING SIMULATOR - TEAM 5     ║
-╠══════════════════════════════════════════════╣
-║  1. First Come First Serve (FCFS)            ║
-║  2. Shortest Job First (SJF)                 ║
-║  3. Shortest Remaining Time (SRT)            ║
-║  4. Round Robin (RR)                         ║
-║  5. Multilevel Feedback Queue (MLFQ)         ║
-║  6. Run ALL algorithms (comparison)          ║
-║  7. Change input (custom processes)          ║
-║  8. Load processes from CSV file             ║
-║  9. Load processes from JSON file            ║
-║  0. Exit                                     ║
-╚══════════════════════════════════════════════╝
-```
+- Center: Process Table + Gantt Chart (colored horizontal bars with time ruler)
 
-| Option | What it does |
-|--------|-------------|
-| `1` | Runs FCFS on the current process set |
-| `2` | Runs SJF (non-preemptive) |
-| `3` | Runs SRT (preemptive, tick-by-tick) |
-| `4` | Prompts for a time quantum (default 2), then runs Round Robin |
-| `5` | Runs MLFQ with Q0 quantum=2, Q1 quantum=4, Q2=FCFS, aging threshold=10 |
-| `6` | Runs all 5 algorithms and prints a side-by-side comparison table |
-| `7` | Replaces the loaded processes with custom input from the terminal |
-| `8` | Loads processes from a CSV file (see format below) |
-| `9` | Loads processes from a JSON file (see format below) |
-| `0` | Exits the simulator |
+- Right: Performance Metrics cards + Chart.js chart
 
----
+[Screenshot placeholder here]
 
 ## Algorithm Descriptions
 
-### 1. First Come First Serve (FCFS)
-Processes are executed strictly in arrival order. Once a process starts, it
-runs to completion — no preemption. If the CPU is idle (no process has arrived
-yet), time advances to the next arrival. Simple and fair in ordering, but can
-cause the "convoy effect" where short processes wait behind a long one.
+One paragraph each for all 5:
 
-### 2. Shortest Job First — SJF (Non-Preemptive)
-At each scheduling decision, the process with the **shortest burst time** among
-all currently arrived processes is selected next. Non-preemptive: once a process
-starts, it runs to completion. Produces the minimum average waiting time for a
-static process set, but can starve long processes if short ones keep arriving.
-Ties are broken by arrival time, then by PID.
+### FCFS
+FCFS executes processes in the order they arrive, running each one to completion without preemption. It is simple and easy to understand, but it can lead to poor performance when a long job arrives early and delays shorter jobs behind it.
 
-### 3. Shortest Remaining Time — SRT (Preemptive)
-The preemptive version of SJF. At **every clock tick**, the process with the
-shortest **remaining** burst time is selected. If a newly arrived process has
-less remaining time than the current process, a context switch occurs immediately.
-Simulated tick-by-tick for accuracy. `compress_gantt()` merges consecutive
-same-PID ticks into readable Gantt segments. Best average turnaround time among
-all algorithms for this scenario, but has high context-switch overhead.
+### SJF (non-preemptive)
+SJF selects the available process with the smallest burst time and runs it until completion. This usually reduces average waiting time compared with FCFS, but it can starve longer jobs if shorter jobs keep arriving.
 
-### 4. Round Robin — RR (Preemptive)
-Each process gets a fixed **time quantum** (default = 2) per turn. If a process
-does not finish within its quantum, it is preempted and added to the **back** of
-the ready queue. New arrivals during a quantum are enqueued **before** a
-preempted process is re-added — this is standard RR convention and is intentional.
-Managed with a `deque` for O(1) enqueue/dequeue. Quantum size directly affects
-the trade-off between response time (smaller quantum = better) and throughput
-(larger quantum = fewer context switches).
+### SRT (preemptive)
+SRT is the preemptive version of SJF and chooses the process with the smallest remaining burst time at each time step. It often gives better turnaround time than non-preemptive SJF, but it requires more frequent context switching.
 
-### 5. Multilevel Feedback Queue — MLFQ
-Three-level queue structure with automatic demotion and aging-based promotion:
+### Round Robin (quantum configurable, default 2)
+Round Robin assigns each process a fixed time quantum and cycles through the ready queue, giving each process a turn in order. A smaller quantum improves responsiveness, while a larger quantum reduces overhead, and the default quantum in this simulator is 2.
 
-| Queue | Algorithm | Quantum |
-|-------|-----------|---------|
-| Q0 (Highest Priority) | Round Robin | 2 ticks |
-| Q1 (Medium Priority)  | Round Robin | 4 ticks |
-| Q2 (Lowest Priority)  | FCFS        | Run to completion |
-
-- **New arrivals** always enter Q0.
-- **Demotion:** if a process uses its full quantum in Q0, it moves to Q1; full quantum in Q1 moves it to Q2.
-- **Aging (starvation prevention):** any process waiting ≥ 10 ticks in Q1 or Q2 is promoted one level up.
-- **Design note:** a process always completes its current quantum slice before a higher-priority arrival is served (no mid-slice preemption). This is a documented scope decision, not a bug.
-
----
+### MLFQ (3 queues: Q0=RR q=2, Q1=RR q=4, Q2=FCFS, aging threshold=10 ticks)
+MLFQ uses three priority queues where new processes start in Q0 and are moved to lower-priority queues as they consume CPU time. The scheduler uses Round Robin in the top two queues, FCFS in the lowest queue, and aging to prevent starvation by promoting waiting processes after 10 ticks.
 
 ## Sample Input
 
-### Default (loaded on launch)
+### Default scenario (loaded on launch)
 
-| Process | Arrival Time | Burst Time |
-|---------|-------------|-----------|
-| P1      | 0           | 5         |
-| P2      | 1           | 3         |
-| P3      | 2           | 8         |
-| P4      | 3           | 6         |
+Table: P1 arrival=0 burst=5, P2 arrival=1 burst=3, P3 arrival=2 burst=8, P4 arrival=3 burst=6
 
-### CSV File Format (`processes.csv`)
+### CSV format (processes.csv)
+
+Show the csv content
 
 ```csv
 pid,arrival,burst
@@ -163,9 +87,9 @@ P3,2,8
 P4,3,6
 ```
 
-Load with option `8` → enter filename: `processes.csv`
+### JSON format (processes.json)
 
-### JSON File Format (`processes.json`)
+Show the json content
 
 ```json
 [
@@ -176,69 +100,38 @@ Load with option `8` → enter filename: `processes.csv`
 ]
 ```
 
-Load with option `9` → enter filename: `processes.json`
-
-### Custom Input (Option 7)
-
-```
-Enter number of processes: 4
-Process 1 ID: P1
-Arrival Time for P1: 0
-Burst Time for P1: 5
-... (repeat for each process)
-```
-
----
-
 ## Sample Output
 
-### FCFS Gantt Chart & Metrics (Option 1)
+### Comparative Analysis table (all 5 algorithms)
 
-```
-  Gantt Chart:
-  -----------------------------------
-  | P1  | P2  | P3  | P4  |
-  -----------------------------------
-  0     5     8     16    22
-```
+FCFS:  Avg WT=5.75  Avg TAT=11.25  Avg RT=5.75
 
-```
-  Scheduling Metrics:
-  PID    Arrival    Burst    Start    Finish    Waiting    Turnaround    Response
-  ---------------------------------------------------------------------------------
-  P1     0          5        0        5         0          5             0
-  P2     1          3        5        8         4          7             4
-  P3     2          8        8        16        6          14            6
-  P4     3          6        16       22        13         19            13
-  ---------------------------------------------------------------------------------
-  Average                                       5.75       11.25         5.75
-```
+SJF:   Avg WT=5.25  Avg TAT=10.75  Avg RT=5.25
 
-### Comparative Analysis (Option 6)
+SRT:   Avg WT=5.00  Avg TAT=10.50  Avg RT=4.25
 
-```
-======================================================================
-  COMPARATIVE ANALYSIS - Average Metrics
-======================================================================
-  Algorithm                      Avg Waiting     Avg Turnaround     Avg Response
-  --------------------------------------------------------------------
-  FCFS                           5.75            11.25              5.75
-  SJF (Non-Preemptive)           5.25            10.75              5.25
-  SRT (Preemptive)               5.00            10.50              4.25
-  Round Robin (q=2)              9.75            15.25              2.00
-  MLFQ (q0=2,q1=4)               9.25            14.75              1.50
-======================================================================
-```
+RR:    Avg WT=9.75  Avg TAT=15.25  Avg RT=2.00
 
-> **[📸 ADD SCREENSHOT HERE]** — Insert a terminal screenshot of option 6 output after final run.
+MLFQ:  Avg WT=9.25  Avg TAT=14.75  Avg RT=1.50
 
----
+[Screenshot placeholder here]
+
+## API Routes
+
+GET  /          serves the web UI
+
+POST /api/run   runs single algorithm, returns gantt + metrics + averages as JSON
+
+POST /api/compare runs all 5 algorithms, returns comparison table as JSON
 
 ## Known Limitations
 
-- **MLFQ does not preempt mid-slice** — a running process always finishes its current quantum even if a higher-priority process arrives during it. Documented as a deliberate scope decision.
-- **SRT is tick-by-tick** (`O(total_time × n)`) — correct and sufficient for this assignment's scale, but not built for very large burst times.
-- **Tie-breaking** across all algorithms falls back to Process ID order when burst times or arrival times are equal.
-- **Custom input (option 7)** validates: ≥ 1 process, burst ≥ 1, arrival ≥ 0, no duplicate PIDs.
+- MLFQ does not preempt mid-slice
+
+- SRT is tick-by-tick O(total_time x n)
+
+- All tie-breaks fall back to PID order
+
+- Web UI runs on development server only
 
 ---

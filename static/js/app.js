@@ -102,25 +102,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  document.getElementById('add-process-btn').addEventListener('click', function() {
+  function addProcessFromFields() {
     const arrival = parseInt(arrivalInput.value, 10);
     const burst = parseInt(burstInput.value, 10);
     const enteredName = processNameInput.value.trim();
 
     if (arrivalInput.value.trim() === '' || isNaN(arrival) || arrival < 0) {
       showError('Please enter a valid Arrival Time (0 or greater).');
-      return;
+      return false;
     }
     if (burstInput.value.trim() === '' || isNaN(burst) || burst <= 0) {
       showError('Please enter a valid Burst Time (1 or greater).');
-      return;
+      return false;
     }
 
     try {
       addProcessEntry({ pid: enteredName || `P${nextPid}`, arrival, burst }, true);
+      return true;
     } catch (error) {
       showError(error.message);
+      return false;
     }
+  }
+
+  document.getElementById('add-process-btn').addEventListener('click', function() {
+    addProcessFromFields();
   });
 
   document.getElementById('load-file-btn').addEventListener('click', function() {
@@ -223,7 +229,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const parsedProcesses = extension === 'csv' ? parseCsvProcesses(text) : parseJsonProcesses(text);
 
         parsedProcesses.forEach(processData => {
-          addProcessEntry(processData, false);
+          try {
+            addProcessEntry(processData, false);
+          } catch (error) {
+            throw new Error(`Invalid process entry: ${error.message}`);
+          }
         });
 
         updateStatus(`Loaded ${parsedProcesses.length} process${parsedProcesses.length === 1 ? '' : 'es'} from ${selectedFile.name}.`);
