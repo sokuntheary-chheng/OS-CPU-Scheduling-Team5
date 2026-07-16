@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let simulationGantt = [];
   let simulationProcesses = [];
   let simulationAverages = null;
+  let perfChart = null;
 
   function reindexProcessIds() {
     processes.forEach((proc, index) => {
@@ -137,6 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('gantt').innerHTML = '';
   }
 
+  function getProcessColor(pid) {
+    const palette = ['#2563eb', '#16a34a', '#f59e0b', '#8b5cf6', '#0f766e', '#dc2626', '#7c3aed', '#0ea5e9'];
+    const base = pid.replace(/\D/g, '');
+    const index = base ? Number.parseInt(base, 10) % palette.length : 0;
+    return palette[index];
+  }
+
   function renderGantt(gantt, uptoTime = null) {
     const area = document.getElementById('gantt');
     area.innerHTML = '';
@@ -146,33 +154,95 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const totalEnd = Math.max(...gantt.map(s => s[2]));
-    const scale = Math.max(400 / Math.max(totalEnd, 1), 10);
-    let y = 10;
-
-    gantt.forEach(seg => {
-      const [pid, start, end] = seg;
+    const visibleSegments = gantt.filter(seg => {
+      const [_, start, end] = seg;
       if (uptoTime !== null && start >= uptoTime) {
-        return;
+        return false;
       }
-
-      const visibleStart = start;
       const visibleEnd = uptoTime === null ? end : Math.min(end, uptoTime);
-      if (visibleEnd <= visibleStart) {
-        return;
-      }
-
-      const div = document.createElement('div');
-      div.className = 'gantt-bar color-' + pid;
-      div.style.left = (visibleStart * scale) + 'px';
-      div.style.width = ((visibleEnd - visibleStart) * scale) + 'px';
-      div.style.top = y + 'px';
-      div.textContent = pid + ' (' + visibleStart + '-' + visibleEnd + ')';
-      area.appendChild(div);
-      y += 36;
+      return visibleEnd > start;
     });
 
-    area.style.height = (y + 20) + 'px';
+    if (visibleSegments.length === 0) {
+      area.textContent = 'No execution.';
+      return;
+    }
+
+    const totalEnd = Math.max(...gantt.map(s => s[2]));
+    const maxTime = Math.max(totalEnd, uptoTime ?? 0);
+    const timeUnitPx = 52;
+    const leftPad = 84;
+    const rowHeight = 40;
+    const chartWidth = Math.max(420, leftPad + (maxTime * timeUnitPx) + 24);
+    const tickStep = maxTime <= 10 ? 1 : Math.ceil(maxTime / 10);
+
+    const shell = document.createElement('div');
+    shell.className = 'gantt-shell';
+    shell.style.width = chartWidth + 'px';
+
+    const ruler = document.createElement('div');
+    ruler.className = 'gantt-ruler';
+    ruler.style.width = chartWidth - leftPad + 'px';
+    ruler.style.marginLeft = leftPad + 'px';
+
+    for (let t = 0; t <= maxTime; t += tickStep) {
+      const tick = document.createElement('div');
+      tick.className = 'gantt-tick';
+      tick.style.left = (t * timeUnitPx) + 'px';
+      tick.innerHTML = '<span class="gantt-tick-mark"></span><span class="gantt-tick-label">' + t + '</span>';
+      ruler.appendChild(tick);
+    }
+
+    if (maxTime % tickStep !== 0) {
+      const tick = document.createElement('div');
+      tick.className = 'gantt-tick';
+      tick.style.left = (maxTime * timeUnitPx) + 'px';
+      tick.innerHTML = '<span class="gantt-tick-mark"></span><span class="gantt-tick-label">' + maxTime + '</span>';
+      ruler.appendChild(tick);
+    }
+
+    shell.appendChild(ruler);
+
+    const rows = document.createElement('div');
+    rows.className = 'gantt-rows';
+
+    visibleSegments.forEach(seg => {
+      const [pid, start, end] = seg;
+      const visibleEnd = uptoTime === null ? end : Math.min(end, uptoTime);
+      if (visibleEnd <= start) {
+        return;
+      }
+
+      const row = document.createElement('div');
+      row.className = 'gantt-row';
+      row.style.minHeight = rowHeight + 'px';
+
+      const label = document.createElement('div');
+      label.className = 'gantt-row-label';
+      label.textContent = pid;
+      row.appendChild(label);
+
+      const track = document.createElement('div');
+      track.className = 'gantt-track';
+      track.style.width = (maxTime * timeUnitPx) + 'px';
+      const bar = document.createElement('div');
+      const color = getProcessColor(pid);
+      bar.className = 'gantt-bar';
+      bar.style.background = color;
+      const barStart = start * timeUnitPx;
+      const barWidth = Math.max(18, (visibleEnd - start) * timeUnitPx);
+      bar.style.left = barStart + 'px';
+      bar.style.width = barWidth + 'px';
+      const labelText = barWidth < 70 ? pid : pid + ' (' + start + '-' + visibleEnd + ')';
+      bar.innerHTML = '<span class="gantt-bar-label">' + labelText + '</span>';
+      track.appendChild(bar);
+      row.appendChild(track);
+      rows.appendChild(row);
+    });
+
+    shell.appendChild(rows);
+    area.appendChild(shell);
+    area.style.minHeight = Math.max(220, visibleSegments.length * rowHeight + 90) + 'px';
   }
 
   function computeBusyTime(gantt, uptoTime) {
@@ -188,42 +258,134 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 0);
   }
 
+  function initPerfChart() {
+    const canvas = document.getElementById('perfChart');
+    if (!canvas || typeof Chart === 'undefined') {
+      return null;
+    }
+
+    if (perfChart) {
+      return perfChart;
+    }
+
+    perfChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ['Waiting', 'Turnaround', 'CPU'],
+        datasets: [{
+          label: 'Performance',
+          data: [0, 0, 0],
+          backgroundColor: ['#60a5fa', '#34d399', '#f59e0b'],
+          borderRadius: 10,
+          maxBarThickness: 30
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: '#64748b' },
+            grid: { color: 'rgba(148, 163, 184, 0.18)' }
+          },
+          x: {
+            ticks: { color: '#64748b' },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+
+    return perfChart;
+  }
+
+  function updatePerfChart(values) {
+    const chart = initPerfChart();
+    if (!chart) {
+      return;
+    }
+
+    const safeValues = values || { avg_waiting: 0, avg_turnaround: 0, cpu_utilization: 0 };
+    const chartValues = [
+      safeValues.avg_waiting || 0,
+      safeValues.avg_turnaround || 0,
+      safeValues.cpu_utilization || 0
+    ];
+
+    chart.data.datasets[0].data = chartValues;
+    const maxY = Math.max(10, Math.ceil(Math.max(...chartValues, 5) / 10) * 10);
+    chart.options.scales.y.max = maxY;
+    chart.update();
+  }
+
   function renderMetrics(processes, averages, uptoTime = null) {
     const avgWaitingNode = document.getElementById('avgWaiting');
     const avgTurnaroundNode = document.getElementById('avgTurnaround');
     const cpuUtilNode = document.getElementById('cpuUtil');
+    const metricBadgeNode = document.getElementById('metricBadge');
+    const metricStateNode = document.getElementById('metricState');
 
-    if (!processes || processes.length === 0) {
-      avgWaitingNode.textContent = '-';
-      avgTurnaroundNode.textContent = '-';
-      cpuUtilNode.textContent = '-';
+    const formatMs = value => Number.isFinite(value) ? value.toFixed(2) + ' ms' : '—';
+    const formatPercent = value => Number.isFinite(value) ? value + '%' : '—';
+
+    if (!processes || processes.length === 0 || !averages) {
+      avgWaitingNode.textContent = '—';
+      avgTurnaroundNode.textContent = '—';
+      cpuUtilNode.textContent = '—';
+      if (metricBadgeNode) {
+        metricBadgeNode.textContent = 'Awaiting run';
+      }
+      if (metricStateNode) {
+        metricStateNode.textContent = 'Run a simulation to see your metrics.';
+      }
+      updatePerfChart(null);
       return;
     }
 
-    if (uptoTime === null || (simulationEnd && uptoTime >= simulationEnd)) {
-      avgWaitingNode.textContent = averages ? averages.avg_waiting.toFixed(2) + ' ms' : '-';
-      avgTurnaroundNode.textContent = averages ? averages.avg_turnaround.toFixed(2) + ' ms' : '-';
-      const totalBurst = processes.reduce((s, p) => s + p.burst, 0);
+    let avgWaiting = averages.avg_waiting ?? 0;
+    let avgTurnaround = averages.avg_turnaround ?? 0;
+    let cpuUtil = null;
+
+    if (uptoTime === null || uptoTime <= 0 || (simulationEnd && uptoTime >= simulationEnd)) {
+      avgWaitingNode.textContent = formatMs(avgWaiting);
+      avgTurnaroundNode.textContent = formatMs(avgTurnaround);
+      const totalBurst = processes.reduce((s, p) => s + (p.burst || 0), 0);
       const totalTime = Math.max(...processes.map(p => p.finish)) || totalBurst || 1;
-      const util = Math.round((totalBurst / totalTime) * 100);
-      cpuUtilNode.textContent = util + '%';
+      cpuUtil = Math.round((totalBurst / totalTime) * 100);
+      cpuUtilNode.textContent = formatPercent(cpuUtil);
+      if (metricBadgeNode) {
+        metricBadgeNode.textContent = uptoTime <= 0 ? 'Initial snapshot' : 'Completed';
+      }
+      if (metricStateNode) {
+        metricStateNode.textContent = 'Final metrics from the latest simulation.';
+      }
+      updatePerfChart({ avg_waiting: avgWaiting, avg_turnaround: avgTurnaround, cpu_utilization: cpuUtil });
       return;
     }
 
     const completed = processes.filter(p => p.finish <= uptoTime);
     if (completed.length > 0) {
-      const avgWaiting = completed.reduce((sum, p) => sum + p.waiting, 0) / completed.length;
-      const avgTurnaround = completed.reduce((sum, p) => sum + p.turnaround, 0) / completed.length;
-      avgWaitingNode.textContent = avgWaiting.toFixed(2) + ' ms';
-      avgTurnaroundNode.textContent = avgTurnaround.toFixed(2) + ' ms';
+      avgWaiting = completed.reduce((sum, p) => sum + (p.waiting || 0), 0) / completed.length;
+      avgTurnaround = completed.reduce((sum, p) => sum + (p.turnaround || 0), 0) / completed.length;
+      avgWaitingNode.textContent = formatMs(avgWaiting);
+      avgTurnaroundNode.textContent = formatMs(avgTurnaround);
     } else {
-      avgWaitingNode.textContent = '-';
-      avgTurnaroundNode.textContent = '-';
+      avgWaitingNode.textContent = '—';
+      avgTurnaroundNode.textContent = '—';
     }
 
     const busyTime = computeBusyTime(simulationGantt, uptoTime);
-    const util = Math.round((busyTime / Math.max(uptoTime, 1)) * 100);
-    cpuUtilNode.textContent = util + '%';
+    cpuUtil = Math.round((busyTime / Math.max(uptoTime, 1)) * 100);
+    cpuUtilNode.textContent = formatPercent(cpuUtil);
+    if (metricBadgeNode) {
+      metricBadgeNode.textContent = 'Live view';
+    }
+    if (metricStateNode) {
+      metricStateNode.textContent = 'Tracking progress in real time.';
+    }
+    updatePerfChart({ avg_waiting: avgWaiting, avg_turnaround: avgTurnaround, cpu_utilization: cpuUtil });
   }
 
   async function fetchSimulationData() {

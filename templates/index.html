@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
-    <div class="container-fluid app-root">
+    <main class="container-fluid app-root">
       <div class="row">
         <div class="col-3 sidebar p-3">
           <h5>Scheduler Configuration</h5>
@@ -92,30 +92,50 @@
         </div>
 
         <div class="col-3 metrics p-3">
-          <h5>Performance Metrics</h5>
-          <canvas id="perfChart" height="120"></canvas>
+          <div class="metrics-header">
+            <div>
+              <h5 class="mb-1">Performance Metrics</h5>
+              <p class="metric-subtitle">Live insight into the current simulation</p>
+            </div>
+            <span class="metric-badge" id="metricBadge">Awaiting run</span>
+          </div>
+
+          <div class="perf-chart-card">
+            <canvas id="perfChart" height="140"></canvas>
+          </div>
+
           <div class="metrics-card mt-3">
             <div class="metrics-card-header">
               <h6 class="mb-0">Summary</h6>
+              <div class="metric-state" id="metricState">Run a simulation to see your metrics.</div>
             </div>
             <div class="metrics-card-body">
               <div class="metric-item">
-                <div class="metric-label">Average Waiting Time</div>
-                <div class="metric-value" id="avgWaiting">-</div>
+                <div class="metric-label">
+                  <span class="metric-icon waiting"></span>
+                  Average Waiting Time
+                </div>
+                <div class="metric-value" id="avgWaiting">—</div>
               </div>
               <div class="metric-item">
-                <div class="metric-label">Average Turnaround Time</div>
-                <div class="metric-value" id="avgTurnaround">-</div>
+                <div class="metric-label">
+                  <span class="metric-icon turnaround"></span>
+                  Average Turnaround Time
+                </div>
+                <div class="metric-value" id="avgTurnaround">—</div>
               </div>
               <div class="metric-item">
-                <div class="metric-label">CPU Utilization</div>
-                <div class="metric-value" id="cpuUtil">-</div>
+                <div class="metric-label">
+                  <span class="metric-icon cpu"></span>
+                  CPU Utilization
+                </div>
+                <div class="metric-value" id="cpuUtil">—</div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
 
     <template id="proc-row-template">
       <tr>
