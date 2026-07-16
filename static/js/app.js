@@ -60,6 +60,47 @@ document.addEventListener('DOMContentLoaded', () => {
   const processNameInput = document.getElementById('process-name');
   const arrivalInput = document.getElementById('arrival-time');
   const burstInput = document.getElementById('burst-time');
+  const fileInput = document.getElementById('file-input');
+
+  function showError(message) {
+    updateStatus('Error: ' + message);
+    alert(message);
+  }
+
+  function createProcessEntry(pid, arrival, burst) {
+    if (!pid || typeof pid !== 'string' || pid.trim() === '') {
+      throw new Error('Each process must have a valid PID.');
+    }
+    if (!Number.isInteger(arrival) || arrival < 0) {
+      throw new Error('Arrival time must be a whole number of 0 or greater.');
+    }
+    if (!Number.isInteger(burst) || burst <= 0) {
+      throw new Error('Burst time must be a whole number greater than 0.');
+    }
+
+    return {
+      pid: pid.trim(),
+      id: pid.trim(),
+      arrival: arrival,
+      burst: burst,
+      remaining: burst,
+      waiting: 0,
+      turnaround: 0
+    };
+  }
+
+  function addProcessEntry(processData, resetInputs = false) {
+    const newProcess = createProcessEntry(processData.pid, processData.arrival, processData.burst);
+    processes.push(newProcess);
+    nextPid += 1;
+    updateProcessTable();
+
+    if (resetInputs) {
+      processNameInput.value = '';
+      arrivalInput.value = 0;
+      burstInput.value = 1;
+    }
+  }
 
   document.getElementById('add-process-btn').addEventListener('click', function() {
     const arrival = parseInt(arrivalInput.value, 10);
@@ -67,32 +108,138 @@ document.addEventListener('DOMContentLoaded', () => {
     const enteredName = processNameInput.value.trim();
 
     if (arrivalInput.value.trim() === '' || isNaN(arrival) || arrival < 0) {
-      alert('Please enter a valid Arrival Time (0 or greater).');
+      showError('Please enter a valid Arrival Time (0 or greater).');
       return;
     }
     if (burstInput.value.trim() === '' || isNaN(burst) || burst <= 0) {
-      alert('Please enter a valid Burst Time (1 or greater).');
+      showError('Please enter a valid Burst Time (1 or greater).');
       return;
     }
 
-    const pid = enteredName || `P${nextPid}`;
-    const newProcess = {
-      pid: pid,
-      id: pid,
-      arrival: arrival,
-      burst: burst,
-      remaining: burst,
-      waiting: 0,
-      turnaround: 0
+    try {
+      addProcessEntry({ pid: enteredName || `P${nextPid}`, arrival, burst }, true);
+    } catch (error) {
+      showError(error.message);
+    }
+  });
+
+  document.getElementById('load-file-btn').addEventListener('click', function() {
+    fileInput.click();
+  });
+
+  function parseCsvProcesses(text) {
+    const rows = text
+      .split(/\r?\n/)
+      .map(row => row.trim())
+      .filter(Boolean);
+
+    if (rows.length === 0) {
+      throw new Error('The CSV file is empty.');
+    }
+
+    const header = rows[0].split(',').map(cell => cell.trim().toLowerCase());
+    if (header.length !== 3 || header[0] !== 'pid' || header[1] !== 'arrival' || header[2] !== 'burst') {
+      throw new Error('CSV must use the header: pid,arrival,burst');
+    }
+
+    return rows.slice(1).map((row, index) => {
+      const values = row.split(',').map(cell => cell.trim());
+      if (values.length !== 3) {
+        throw new Error('Each CSV row must have exactly 3 values: pid, arrival, burst.');
+      }
+
+      const [pid, arrivalText, burstText] = values;
+      const arrival = Number.parseInt(arrivalText, 10);
+      const burst = Number.parseInt(burstText, 10);
+
+      if (!pid) {
+        throw new Error(`Row ${index + 2} is missing a PID.`);
+      }
+      if (Number.isNaN(arrival) || !Number.isInteger(arrival) || arrival < 0) {
+        throw new Error(`Row ${index + 2} has an invalid arrival time.`);
+      }
+      if (Number.isNaN(burst) || !Number.isInteger(burst) || burst <= 0) {
+        throw new Error(`Row ${index + 2} has an invalid burst time.`);
+      }
+
+      return { pid, arrival, burst };
+    });
+  }
+
+  function parseJsonProcesses(text) {
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (error) {
+      throw new Error('The JSON file is not valid JSON.');
+    }
+
+    if (!Array.isArray(parsed)) {
+      throw new Error('JSON must be an array of process objects.');
+    }
+
+    return parsed.map((item, index) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        throw new Error(`Item ${index + 1} must be an object.`);
+      }
+
+      const { pid, arrival, burst } = item;
+      const arrivalValue = Number.parseInt(arrival, 10);
+      const burstValue = Number.parseInt(burst, 10);
+
+      if (!pid || typeof pid !== 'string' || pid.trim() === '') {
+        throw new Error(`Item ${index + 1} is missing a valid PID.`);
+      }
+      if (Number.isNaN(arrivalValue) || !Number.isInteger(arrivalValue) || arrivalValue < 0) {
+        throw new Error(`Item ${index + 1} has an invalid arrival time.`);
+      }
+      if (Number.isNaN(burstValue) || !Number.isInteger(burstValue) || burstValue <= 0) {
+        throw new Error(`Item ${index + 1} has an invalid burst time.`);
+      }
+
+      return { pid: pid.trim(), arrival: arrivalValue, burst: burstValue };
+    });
+  }
+
+  fileInput.addEventListener('change', function() {
+    const selectedFile = fileInput.files[0];
+    if (!selectedFile) {
+      return;
+    }
+
+    const fileName = selectedFile.name.toLowerCase();
+    const extension = fileName.endsWith('.csv') ? 'csv' : fileName.endsWith('.json') ? 'json' : null;
+
+    if (!extension) {
+      showError('Please choose a .csv or .json file.');
+      fileInput.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function() {
+      try {
+        const text = reader.result;
+        const parsedProcesses = extension === 'csv' ? parseCsvProcesses(text) : parseJsonProcesses(text);
+
+        parsedProcesses.forEach(processData => {
+          addProcessEntry(processData, false);
+        });
+
+        updateStatus(`Loaded ${parsedProcesses.length} process${parsedProcesses.length === 1 ? '' : 'es'} from ${selectedFile.name}.`);
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        fileInput.value = '';
+      }
     };
 
-    processes.push(newProcess);
-    nextPid += 1;
-    updateProcessTable();
+    reader.onerror = function() {
+      showError('Could not read the selected file.');
+      fileInput.value = '';
+    };
 
-    processNameInput.value = '';
-    arrivalInput.value = 0;
-    burstInput.value = 1;
+    reader.readAsText(selectedFile);
   });
 
   document.getElementById('resetBtn').addEventListener('click', () => {

@@ -53,7 +53,11 @@
           </div>
 
           <div class="d-grid gap-2 mt-3">
-            <button id="add-process-btn" type="button" class="btn btn-primary">Add Process</button>
+            <div class="d-flex gap-2">
+              <button id="add-process-btn" type="button" class="btn btn-primary flex-grow-1">Add Process</button>
+              <button id="load-file-btn" type="button" class="btn btn-outline-secondary">Load File</button>
+              <input id="file-input" type="file" accept=".csv,.json" hidden>
+            </div>
             <button id="runBtn" class="btn btn-success">Run Simulation</button>
             <button id="pauseBtn" class="btn btn-secondary" disabled>Pause</button>
             <button id="resetBtn" class="btn btn-light">Reset</button>
