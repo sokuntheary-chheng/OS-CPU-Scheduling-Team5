@@ -53,7 +53,7 @@ Describe the 3-panel dashboard:
 
 - Right: Performance Metrics cards + Chart.js chart
 
-[Screenshot placeholder here]
+![initial page](images/dashboard.png)
 
 ## Algorithm Descriptions
 
@@ -82,7 +82,6 @@ Table: P1 arrival=0 burst=5, P2 arrival=1 burst=3, P3 arrival=2 burst=8, P4 arri
 
 ### CSV format (processes.csv)
 
-Show the csv content
 
 ```csv
 pid,arrival,burst
@@ -94,7 +93,6 @@ P4,3,6
 
 ### JSON format (processes.json)
 
-Show the json content
 
 ```json
 [
@@ -119,7 +117,7 @@ RR:    Avg WT=9.75  Avg TAT=15.25  Avg RT=2.00
 
 MLFQ:  Avg WT=9.25  Avg TAT=14.75  Avg RT=1.50
 
-![Algorithm Comparision](image.png)
+![Algorithm Comparision](images/comparision_algorithm.png)
 
 ## API Routes
 
