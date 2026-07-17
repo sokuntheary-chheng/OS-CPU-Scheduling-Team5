@@ -19,9 +19,13 @@
 python main.py
 Then open http://127.0.0.1:5000
 
+
+*Note: this runs a local development server. Each user must run `python main.py` on their own machine — the URL `http://127.0.0.1:5000` only works on the machine currently running the server.
+
 ### Terminal Interface (alternative)
 python cli.py
 Follow the numbered menu to select an algorithm, load custom processes, or run a full comparison.
+
 
 ## Project Structure
 
