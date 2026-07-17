@@ -303,11 +303,33 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('gantt').innerHTML = '';
   }
 
+  // Track color assignments for each PID
+  const pidColors = {};
+  const palette = ['#2563eb', '#16a34a', '#f59e0b', '#8b5cf6', '#0f766e', '#dc2626', '#7c3aed', '#0ea5e9'];
+  let nextColorIndex = 0;
+
   function getProcessColor(pid) {
-    const palette = ['#2563eb', '#16a34a', '#f59e0b', '#8b5cf6', '#0f766e', '#dc2626', '#7c3aed', '#0ea5e9'];
-    const base = pid.replace(/\D/g, '');
-    const index = base ? Number.parseInt(base, 10) % palette.length : 0;
-    return palette[index];
+    if (!pidColors[pid]) {
+      pidColors[pid] = palette[nextColorIndex % palette.length];
+      nextColorIndex++;
+    }
+    return pidColors[pid];
+  }
+
+  function renderLegend(uniquePids) {
+    const area = document.getElementById('gantt');
+    const legend = document.createElement('div');
+    legend.className = 'gantt-legend d-flex flex-wrap gap-3 mt-3';
+    
+    uniquePids.forEach(pid => {
+      const item = document.createElement('div');
+      item.className = 'd-flex align-items-center';
+      item.innerHTML = `<span style="width: 12px; height: 12px; background: ${getProcessColor(pid)}; border-radius: 2px; margin-right: 6px;"></span>` +
+                       `<span class="small text-muted">${pid}</span>`;
+      legend.appendChild(item);
+    });
+    
+    area.appendChild(legend);
   }
 
   function renderGantt(gantt, uptoTime = null) {
@@ -335,10 +357,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const totalEnd = Math.max(...gantt.map(s => s[2]));
     const maxTime = Math.max(totalEnd, uptoTime ?? 0);
-    const timeUnitPx = 52;
     const leftPad = 84;
     const rowHeight = 40;
-    const chartWidth = Math.max(420, leftPad + (maxTime * timeUnitPx) + 24);
+    const containerWidth = area.offsetWidth;
+    // Calculate pixels per time unit to fit in container
+    const timeUnitPx = maxTime > 0 ? (containerWidth - leftPad - 24) / maxTime : 52;
+    const chartWidth = containerWidth;
     // Display ticks at every time unit for better readability
     const tickStep = 1;
 
@@ -355,7 +379,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const tick = document.createElement('div');
       tick.className = 'gantt-tick';
       tick.style.left = (t * timeUnitPx) + 'px';
-      tick.innerHTML = '<span class="gantt-tick-mark"></span><span class="gantt-tick-label">' + t + '</span>';
+      
+      // Determine if we should show the label based on available space
+      const showLabel = (timeUnitPx >= 20 || t % 2 === 0);
+      
+      tick.innerHTML = '<span class="gantt-tick-mark"></span>' +
+                       (showLabel ? '<span class="gantt-tick-label">' + t + '</span>' : '');
       ruler.appendChild(tick);
     }
 
@@ -363,6 +392,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const rows = document.createElement('div');
     rows.className = 'gantt-rows';
+
+    // Track the end time of the last segment in each row to identify gaps
+    const rowLastEndTime = {};
 
     visibleSegments.forEach(seg => {
       const [pid, start, end] = seg;
@@ -383,24 +415,44 @@ document.addEventListener('DOMContentLoaded', () => {
       const track = document.createElement('div');
       track.className = 'gantt-track';
       track.style.width = (maxTime * timeUnitPx) + 'px';
+
+      // Render Idle segment if there's a gap
+      const lastEnd = rowLastEndTime[pid] || 0;
+      if (start > lastEnd) {
+        const idleBar = document.createElement('div');
+        idleBar.className = 'gantt-bar idle';
+        idleBar.style.left = (lastEnd * timeUnitPx) + 'px';
+        idleBar.style.width = ((start - lastEnd) * timeUnitPx) + 'px';
+        idleBar.innerHTML = '<span class="gantt-bar-label">Idle</span>';
+        track.appendChild(idleBar);
+      }
+
       const bar = document.createElement('div');
       const color = getProcessColor(pid);
       bar.className = 'gantt-bar';
       bar.style.background = color;
       const barStart = start * timeUnitPx;
-      const barWidth = Math.max(18, (visibleEnd - start) * timeUnitPx);
+      const barWidth = (visibleEnd - start) * timeUnitPx;
       bar.style.left = barStart + 'px';
       bar.style.width = barWidth + 'px';
       const labelText = barWidth < 70 ? pid : pid + ' (' + start + '-' + visibleEnd + ')';
       bar.innerHTML = '<span class="gantt-bar-label">' + labelText + '</span>';
       track.appendChild(bar);
+      
       row.appendChild(track);
       rows.appendChild(row);
+
+      rowLastEndTime[pid] = visibleEnd;
     });
 
     shell.appendChild(rows);
     area.appendChild(shell);
-    area.style.minHeight = Math.max(220, visibleSegments.length * rowHeight + 90) + 'px';
+    
+    // Render legend
+    const uniquePids = [...new Set(visibleSegments.map(s => s[0]))].sort();
+    renderLegend(uniquePids);
+    
+    area.style.minHeight = Math.max(220, visibleSegments.length * rowHeight + 130) + 'px';
   }
 
   function computeBusyTime(gantt, uptoTime) {

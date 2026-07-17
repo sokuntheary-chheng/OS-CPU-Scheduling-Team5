@@ -106,7 +106,15 @@ body {
     font-weight: bold;
     overflow: hidden;
     white-space: nowrap;
+    box-sizing: border-box;
+    margin: 0;
 }
+
+.gantt-bar.idle {
+    background: #e2e8f0;
+    color: #475569;
+}
+
 
 .metrics-header {
     display: flex;
