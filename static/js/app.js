@@ -355,14 +355,18 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const totalEnd = Math.max(...gantt.map(s => s[2]));
-    const maxTime = Math.max(totalEnd, uptoTime ?? 0);
+    const totalSimulationTime = Math.max(...gantt.map(s => s[2]));
+    const maxTime = Math.max(totalSimulationTime, uptoTime ?? 0);
     const leftPad = 84;
     const rowHeight = 40;
+    
+    // Maintain a minimum width per time unit (e.g., 30px) to ensure readability.
+    // If the simulation is too long for the container, allow horizontal scrolling.
     const containerWidth = area.offsetWidth;
-    // Calculate pixels per time unit to fit in container
-    const timeUnitPx = maxTime > 0 ? (containerWidth - leftPad - 24) / maxTime : 52;
-    const chartWidth = containerWidth;
+    const minTimeUnitPx = 30; 
+    const timeUnitPx = Math.max(minTimeUnitPx, (containerWidth - leftPad - 24) / Math.max(maxTime, 1));
+    const chartWidth = Math.max(containerWidth, leftPad + (maxTime * timeUnitPx) + 24);
+
     // Display ticks at every time unit for better readability
     const tickStep = 1;
 
@@ -372,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ruler = document.createElement('div');
     ruler.className = 'gantt-ruler';
-    ruler.style.width = chartWidth - leftPad + 'px';
+    ruler.style.width = (maxTime * timeUnitPx) + 'px';
     ruler.style.marginLeft = leftPad + 'px';
 
     for (let t = 0; t <= maxTime; t += tickStep) {
@@ -435,8 +439,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const barWidth = (visibleEnd - start) * timeUnitPx;
       bar.style.left = barStart + 'px';
       bar.style.width = barWidth + 'px';
-      const labelText = pid + ' (' + start + '-' + visibleEnd + ')';
-      bar.innerHTML = '<span class="gantt-bar-label">' + labelText + '</span>';
+      
+      const fullLabel = pid + ' (' + start + '-' + visibleEnd + ')';
+      
+      // Approximate text width: ~7px per character
+      const labelText = (barWidth > fullLabel.length * 7) ? fullLabel : pid;
+      
+      bar.innerHTML = `<span class="gantt-bar-label" title="${fullLabel}">${labelText}</span>`;
       track.appendChild(bar);
       
       row.appendChild(track);

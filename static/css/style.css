@@ -110,6 +110,15 @@ body {
     margin: 0;
 }
 
+.gantt-bar-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    width: 100%;
+    padding: 0 4px;
+}
+
 .gantt-bar.idle {
     background: #e2e8f0;
     color: #475569;
