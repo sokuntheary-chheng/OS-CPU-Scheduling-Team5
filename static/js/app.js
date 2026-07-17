@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateProcessTable();
 
     if (resetInputs) {
-      processNameInput.value = '';
+      processNameInput.value = 'P' + nextPid;
       arrivalInput.value = 0;
       burstInput.value = 1;
     }
@@ -113,6 +113,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (burstInput.value.trim() === '' || isNaN(burst) || burst <= 0) {
       showError('Please enter a valid Burst Time (1 or greater).');
+      return false;
+    }
+
+    // Check for duplicate PID
+    if (processes.some(p => p.pid === enteredName)) {
+      showError('PID ' + enteredName + ' already exists.');
       return false;
     }
 
@@ -256,6 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
     stopSimulation();
     processes.length = 0;
     nextPid = 1;
+    processNameInput.value = 'P1';
     currentTime = 0;
     simulationEnd = 0;
     simulationGantt = [];
