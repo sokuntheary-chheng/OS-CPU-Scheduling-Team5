@@ -264,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateProcessTable();
     clearGantt();
     renderMetrics([], null);
+    resetToSingleMetrics();
     updateStatus('Ready');
   });
 
@@ -414,6 +415,19 @@ document.addEventListener('DOMContentLoaded', () => {
       return sum + Math.max(0, Math.min(end, uptoTime) - start);
     }, 0);
   }
+
+  function resetToSingleMetrics() {
+    if (perfChart) {
+      perfChart.destroy();
+      perfChart = null;
+    }
+    const stateNode = document.getElementById('metricState');
+    if (stateNode) stateNode.textContent = 'Run a simulation to see your metrics.';
+    initPerfChart();
+  }
+
+  // BUG 1 Fix: Ensure metricState starts empty or with default text
+  document.getElementById('metricState').textContent = 'Run a simulation to see your metrics.';
 
   document.getElementById('compareBtn').addEventListener('click', fetchAndCompare);
 
@@ -598,7 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
         metricBadgeNode.textContent = uptoTime <= 0 ? 'Initial snapshot' : 'Completed';
       }
       if (metricStateNode) {
-        metricStateNode.textContent = 'Final metrics from the latest simulation.';
+        metricStateNode.textContent = ''; // FIXED: Clear metricState for single runs
       }
       updatePerfChart({ avg_waiting: avgWaiting, avg_turnaround: avgTurnaround, cpu_utilization: cpuUtil });
       return;
@@ -622,7 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
       metricBadgeNode.textContent = 'Live view';
     }
     if (metricStateNode) {
-      metricStateNode.textContent = 'Tracking progress in real time.';
+      metricStateNode.textContent = ''; // FIXED: Clear metricState for single runs
     }
     updatePerfChart({ avg_waiting: avgWaiting, avg_turnaround: avgTurnaround, cpu_utilization: cpuUtil });
   }
@@ -663,6 +677,8 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Add at least one process before running the simulation.');
       return;
     }
+
+    resetToSingleMetrics();
 
     processes.sort((a, b) => a.arrival - b.arrival || (a.pid || a.id).localeCompare(b.pid || b.id));
     updateProcessTable();
