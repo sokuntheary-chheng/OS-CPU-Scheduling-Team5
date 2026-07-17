@@ -431,6 +431,14 @@ document.addEventListener('DOMContentLoaded', () => {
         track.appendChild(idleBar);
       }
 
+    // Setup canvas for precise text measurement
+    const canvasContext = document.createElement('canvas').getContext('2d');
+    canvasContext.font = 'bold 11px sans-serif'; // Must match CSS
+
+    // ... (rest of the setup code)
+    
+    // ...
+
       const bar = document.createElement('div');
       const color = getProcessColor(pid);
       bar.className = 'gantt-bar';
@@ -442,11 +450,14 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const fullLabel = pid + ' (' + start + '-' + visibleEnd + ')';
       
-      // Approximate text width: ~7px per character
-      const labelText = (barWidth > fullLabel.length * 7) ? fullLabel : pid;
+      // Use canvas for precise width measurement
+      const textWidth = canvasContext.measureText(fullLabel).width;
+      const labelText = (barWidth > textWidth + 8) ? fullLabel : pid;
       
       bar.innerHTML = `<span class="gantt-bar-label" title="${fullLabel}">${labelText}</span>`;
       track.appendChild(bar);
+      
+      // ... (rest of the loop)
       
       row.appendChild(track);
       rows.appendChild(row);
