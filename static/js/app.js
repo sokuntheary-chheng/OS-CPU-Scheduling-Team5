@@ -426,8 +426,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initPerfChart();
   }
 
-  // BUG 1 Fix: Ensure metricState starts empty or with default text
-  document.getElementById('metricState').textContent = 'Run a simulation to see your metrics.';
+  // Initialize performance metrics display
+  resetToSingleMetrics();
 
   document.getElementById('compareBtn').addEventListener('click', fetchAndCompare);
 
