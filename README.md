@@ -119,7 +119,7 @@ RR:    Avg WT=9.75  Avg TAT=15.25  Avg RT=2.00
 
 MLFQ:  Avg WT=9.25  Avg TAT=14.75  Avg RT=1.50
 
-[Screenshot placeholder here]
+![Algorithm Comparision](image.png)
 
 ## API Routes
 
