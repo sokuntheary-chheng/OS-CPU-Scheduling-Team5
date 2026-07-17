@@ -339,7 +339,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const leftPad = 84;
     const rowHeight = 40;
     const chartWidth = Math.max(420, leftPad + (maxTime * timeUnitPx) + 24);
-    const tickStep = maxTime <= 10 ? 1 : Math.ceil(maxTime / 10);
+    // Display ticks at every time unit for better readability
+    const tickStep = 1;
 
     const shell = document.createElement('div');
     shell.className = 'gantt-shell';
@@ -355,14 +356,6 @@ document.addEventListener('DOMContentLoaded', () => {
       tick.className = 'gantt-tick';
       tick.style.left = (t * timeUnitPx) + 'px';
       tick.innerHTML = '<span class="gantt-tick-mark"></span><span class="gantt-tick-label">' + t + '</span>';
-      ruler.appendChild(tick);
-    }
-
-    if (maxTime % tickStep !== 0) {
-      const tick = document.createElement('div');
-      tick.className = 'gantt-tick';
-      tick.style.left = (maxTime * timeUnitPx) + 'px';
-      tick.innerHTML = '<span class="gantt-tick-mark"></span><span class="gantt-tick-label">' + maxTime + '</span>';
       ruler.appendChild(tick);
     }
 
