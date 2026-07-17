@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const barWidth = (visibleEnd - start) * timeUnitPx;
       bar.style.left = barStart + 'px';
       bar.style.width = barWidth + 'px';
-      const labelText = barWidth < 70 ? pid : pid + ' (' + start + '-' + visibleEnd + ')';
+      const labelText = pid + ' (' + start + '-' + visibleEnd + ')';
       bar.innerHTML = '<span class="gantt-bar-label">' + labelText + '</span>';
       track.appendChild(bar);
       
