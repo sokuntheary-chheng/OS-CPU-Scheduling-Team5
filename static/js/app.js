@@ -415,6 +415,88 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 0);
   }
 
+  document.getElementById('compareBtn').addEventListener('click', fetchAndCompare);
+
+  async function fetchAndCompare() {
+    updateStatus('Comparing algorithms...');
+    const payloadProcesses = processes.map(p => ({
+      pid: p.pid || p.id,
+      arrival: p.arrival,
+      burst: p.burst
+    }));
+
+    const resp = await fetch('/api/compare', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ 
+        processes: payloadProcesses,
+        quantum: parseInt(document.getElementById('quantum').value) || 2,
+        q0: parseInt(document.getElementById('q0').value) || 2,
+        q1: parseInt(document.getElementById('q1').value) || 4
+      })
+    });
+
+    const data = await resp.json();
+    if (data.error) {
+      alert('Error: ' + data.error);
+      updateStatus('Ready');
+      return;
+    }
+
+    const dataArray = Object.entries(data).map(([label, metrics]) => ({
+      label,
+      avg_waiting: metrics.avg_waiting,
+      avg_turnaround: metrics.avg_turnaround,
+      avg_response: metrics.avg_response
+    }));
+
+    renderComparisonTable(dataArray);
+    renderComparisonChart(dataArray);
+    updateStatus('Comparison ready');
+  }
+
+  function renderComparisonTable(data) {
+    const stateNode = document.getElementById('metricState');
+    if (stateNode) {
+        stateNode.innerHTML = '<table class="table table-sm small mt-2"><thead><tr><th>Algo</th><th>Wait</th><th>TAT</th><th>Resp</th></tr></thead><tbody>' +
+            data.map(d => `<tr><td>${d.label}</td><td>${d.avg_waiting.toFixed(1)}</td><td>${d.avg_turnaround.toFixed(1)}</td><td>${d.avg_response.toFixed(1)}</td></tr>`).join('') +
+            '</tbody></table>';
+    }
+  }
+
+  function renderComparisonChart(data) {
+    if (perfChart) {
+      perfChart.destroy();
+      perfChart = null;
+    }
+    const canvas = document.getElementById('perfChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    perfChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.label),
+        datasets: [
+          { label: 'Avg Waiting', data: data.map(d => d.avg_waiting), backgroundColor: '#2563eb' },
+          { label: 'Avg Turnaround', data: data.map(d => d.avg_turnaround), backgroundColor: '#f59e0b' },
+          { label: 'Avg Response', data: data.map(d => d.avg_response), backgroundColor: '#16a34a' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
+            title: { display: true, text: 'Algorithm Performance Comparison' }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: '#64748b' } },
+          x: { ticks: { color: '#64748b' } }
+        }
+      }
+    });
+  }
+
   function initPerfChart() {
     const canvas = document.getElementById('perfChart');
     if (!canvas || typeof Chart === 'undefined') {
