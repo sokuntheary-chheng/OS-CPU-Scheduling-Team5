@@ -15,13 +15,20 @@
 
 - python main.py then open [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
-- Also works as terminal: explain how but note web UI is the primary interface
+### Web Interface (primary)
+python main.py
+Then open http://127.0.0.1:5000
+
+### Terminal Interface (alternative)
+python cli.py
+Follow the numbered menu to select an algorithm, load custom processes, or run a full comparison.
 
 ## Project Structure
 
 ```
 OS-CPU-Scheduling-Team5/
-├── main.py                  # Flask entry point and API routes for the web UI
+├── main.py                  # Flask entry point and API routes for the web UI (primary interface)
+├── cli.py                   # Terminal-based menu interface (alternative to web UI)
 ├── process.py               # Process model and shared process helpers
 ├── display.py               # Metrics and display formatting for scheduler results
 ├── fcfs.py                  # First Come First Serve scheduling logic
@@ -39,8 +46,7 @@ OS-CPU-Scheduling-Team5/
 ├── processes.csv            # Sample CSV input file
 ├── processes.json           # Sample JSON input file
 ├── requirements.txt         # Python dependencies (Flask)
-├── Todo.json                # Project metadata
-├── script.md                # Notes and script outline for video presentation
+├── Todo.json                # Project metadatapresentation
 └── .gitignore               # Excludes __pycache__, .venv, logs from tracking
 ```
 ## Web Interface
@@ -118,6 +124,7 @@ RR:    Avg WT=9.75  Avg TAT=15.25  Avg RT=2.00
 MLFQ:  Avg WT=9.25  Avg TAT=14.75  Avg RT=1.50
 
 ![Algorithm Comparision](images/comparision_algorithm.png)
+
 
 ## API Routes
 
