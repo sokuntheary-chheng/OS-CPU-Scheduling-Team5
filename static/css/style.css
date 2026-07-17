@@ -90,7 +90,7 @@ body {
 
 .gantt-track {
     position: relative;
-    height: 30px;
+    height: 40px;
 }
 
 .gantt-bar {
@@ -117,6 +117,16 @@ body {
     display: block;
     width: 100%;
     padding: 0 4px;
+}
+
+.gantt-bar-time-mark {
+    position: absolute;
+    top: 28px;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: #64748b;
+    white-space: nowrap;
+    pointer-events: none;
 }
 
 .gantt-bar.idle {

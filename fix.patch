@@ -1,0 +1,41 @@
+--- a/static/css/style.css
++++ b/static/css/style.css
+@@ -90,7 +90,7 @@
+ 
+ .gantt-track {
+     position: relative;
+-    height: 30px;
++    height: 40px;
+ }
+ 
+ .gantt-bar {
+@@ -119,6 +119,16 @@
+     padding: 0 4px;
+ }
+ 
++.gantt-bar-time-mark {
++    position: absolute;
++    top: 28px;
++    transform: translateX(-50%);
++    font-size: 9px;
++    color: #64748b;
++    white-space: nowrap;
++    pointer-events: none;
++}
++
+ .gantt-bar.idle {
+     background: #e2e8f0;
+     color: #475569;
+--- a/templates/index.html
++++ b/templates/index.html
+@@ -84,8 +84,9 @@
+           </div>
+ 
+           <div class="section-block">
+-            <div class="section-header">
++            <div class="section-header d-flex align-items-center justify-content-between">
+               <h5 class="mb-0">Execution Timeline (Gantt Chart)</h5>
++              <span id="ganttAlgoBadge" class="badge bg-secondary">No algorithm run yet</span>
+             </div>
+             <div class="section-body pt-3">
+               <div id="gantt" class="gantt-area"></div>

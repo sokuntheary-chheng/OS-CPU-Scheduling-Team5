@@ -456,6 +456,13 @@ document.addEventListener('DOMContentLoaded', () => {
       
       bar.innerHTML = `<span class="gantt-bar-label" title="${fullLabel}">${labelText}</span>`;
       track.appendChild(bar);
+
+      // Add a visible time range marker for narrow bars
+      const timeMark = document.createElement('div');
+      timeMark.className = 'gantt-bar-time-mark';
+      timeMark.style.left = (barStart + barWidth) + 'px';
+      timeMark.textContent = `${start}-${visibleEnd}`;
+      track.appendChild(timeMark);
       
       // ... (rest of the loop)
       
